@@ -5,7 +5,8 @@ function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, 
 % Inputs:
 %  -- param   a struct contains all necessary parameters
 %  -- xN      The final target that state must reach at N
-%  -- X_list  lists of system dynamics and constraints 
+%  -- A_list B_list lists of system dynamics 
+%  -- C_list, D_list, G_list, r_list, h_list lists of constraints 
 % Outputs:
 %  -- Soln 
 
@@ -99,13 +100,13 @@ for i=N:-1:1
         K_list(:,:,i) = K;
     end
     % remove redudant terms, the paragraph below equation 21
-%     c = [hlt1 Hxt1];
-%     [U,S,V] = svd(c);
-%     c = U'*c;
-%     rows = size(c,1);
-%     c = c(1:rows-rankNut,:);
-%     hlt1 = c(:,1);
-%     Hxt1 = c(:,2:end);
+    c = [hlt1 Hxt1];
+    [U,S,V] = svd(c);
+    c = U'*c;
+    rows = size(c,1);
+    c = c(1:rows-rankNut,:);
+    hlt1 = c(:,1);
+    Hxt1 = c(:,2:end);
 
     % update constraint to go , equation 20 and 21
     Hxt = Nxt + Nut*K;

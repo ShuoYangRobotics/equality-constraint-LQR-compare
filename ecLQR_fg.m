@@ -4,7 +4,8 @@ function Soln = ecLQR_fg(param, xN,  A_list, B_list, C_list, D_list, G_list, r_l
 % Inputs:
 %  -- param   a struct contains all necessary parameters
 %  -- xN      The final target that state must reach at N
-%  -- X_list  lists of system dynamics and constraints 
+%  -- A_list B_list lists of system dynamics 
+%  -- C_list, D_list, G_list, r_list, h_list lists of constraints 
 % Outputs:
 %  -- Soln 
 
@@ -68,8 +69,8 @@ for i=1:N
 end
 
 
-% noises
-q_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(Q));
+% noises 
+q_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(Q)); % these may not be correct
 r_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(R));
 qf_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(Qf));
 % q_noise = gtsam.noiseModel.Gaussian.SqrtInformation(Q);
@@ -85,6 +86,7 @@ graph.add(X(N+1), eye(nx), zeros(nx,1), qf_noise);
 
 result = graph.optimize();
 
+% no variable elimination to get K list yet
 
 
 Soln(N).t = 0;

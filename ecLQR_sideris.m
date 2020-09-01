@@ -5,7 +5,8 @@ function Soln = ecLQR_sideris(param, xN,  A_list, B_list, C_list, D_list, G_list
 % Inputs:
 %  -- param   a struct contains all necessary parameters
 %  -- xN      The final target that state must reach at N
-%  -- X_list  lists of system dynamics and constraints 
+%  -- A_list B_list lists of system dynamics 
+%  -- C_list, D_list, G_list, r_list, h_list lists of constraints 
 % Outputs:
 %  -- Soln 
 
@@ -124,10 +125,10 @@ for i=1:length(Cx)
         F((i-1)*ncx+1:(i-1)*ncx+ncx,(l-1)*ncx+1:(l-1)*ncx+ncx) = subF;
     end
 end
-% Gamma = sparse(ncx*length(Cx),nx);
-% for i=1:length(Cx)
-%     Gamma((i-1)*ncx+1:(i-1)*ncx+ncx,:) = Gamma_list{i}(:,:,1);
-% end
+Gamma = sparse(ncx*length(Cx),nx);
+for i=1:length(Cx)
+    Gamma((i-1)*ncx+1:(i-1)*ncx+ncx,:) = Gamma_list{i}(:,:,1);
+end
 y = zeros(ncx*length(Cx),1);
 for i=1:length(Cx)
     y((i-1)*ncx+1:(i-1)*ncx+ncx) = y_list{i}(:,1);
