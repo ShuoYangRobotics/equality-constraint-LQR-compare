@@ -1,4 +1,4 @@
-function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
+function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list, corrected)
 %ECLQR_SIDERIS solve LQR with equality constraint using sideris method
 %              in paper Efficient computation of feedback control for equality-constrained lqr
 % It uses the general input output structure:
@@ -7,8 +7,13 @@ function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, 
 %  -- xN      The final target that state must reach at N
 %  -- A_list B_list lists of system dynamics 
 %  -- C_list, D_list, G_list, r_list, h_list lists of constraints 
+%  -- corrected whether to use the corrected version of Eq 13 or the original
 % Outputs:
 %  -- Soln 
+
+if nargin < 10
+    corrected = 1;
+end
 
 %1. necessary variables
 N = param.N;
@@ -96,11 +101,22 @@ for i=N:-1:1
         k_list(:,i) = k;
         K_list(:,:,i) = K;
     else
-        P = V(1:rankNut,:);
-        Z = V(rankNut+1:nu,:);
+        P = V(:, 1:rankNut);
+        Z = V(:, rankNut+1:nu);
         % equation 17 and 18
-        K = -( P*pinv(Nut*P)*Nxt + Z*(Z'*Muut*Z)\Z'*Muxt );
-        k = -( P*pinv(Nut*P)*nlt + Z*(Z'*Muut*Z)\Z'*mult );
+        pystarK = P*pinv(Nut*P)*Nxt;
+        pystark = P*pinv(Nut*P)*nlt;
+        if corrected
+            zwstarK = Z*((Z'*Muut*Z)\Z')*(Muxt - Muut*pystarK);
+            zwstark = Z*((Z'*Muut*Z)\Z')*(mult - Muut*pystark);
+        else
+            % this is valid under certain cases, such as Muut takes the form c*eye(nu) or certain
+            %   combinations of Z/P that have lots of zeros, which makes this bug tricky to catch
+            zwstarK = Z*((Z'*Muut*Z)\Z')*(Muxt);
+            zwstark = Z*((Z'*Muut*Z)\Z')*(mult);
+        end
+        K = -( pystarK + zwstarK );
+        k = -( pystark + zwstark );
         k_list(:,i) = k;
         K_list(:,:,i) = K;
     end
@@ -112,6 +128,8 @@ for i=N:-1:1
     c = c(1:rows-rankNut,:);
     hlt1 = c(:,1);
     Hxt1 = c(:,2:end);
+
+%     checkKs(mxlt, mult, Mxxt, Muxt, Muut, Nxt, Nut, nlt, K, k); % checks clique soln against quadprog
 
     % update constraint to go , equation 20 and 21
     Hxt = Nxt + Nut*K;
@@ -150,4 +168,20 @@ for i=1:nSoln
 end
 Soln(N+1).x = x_list(:,N+1);
 
+end
+
+function [] = checkKs(mxlt, mult, Mxxt, Muxt, Muut, Nxt, Nut, nlt, K, k)
+    xustar_gt = quadprog([Mxxt,Muxt';Muxt,Muut], [mxlt, mult], [], [], [Nxt, Nut], -nlt,...
+        [],[],[],optimset('Display', 'off'));
+    ustar = @(xt) K*xt + k;
+
+    obj = @(u, xt) [1,xt',u']*[0,mxlt',mult';mxlt,Mxxt,Muxt'; mult,Muxt, Muut]*[1;xt;u];
+    nx = size(K, 2);
+    xt = xustar_gt(1:nx);
+    ut = xustar_gt((nx+1):end);
+
+    obj_gt = obj(ut, xt);
+    obj_laine = obj(ustar(xt), xt);
+    assert(obj_laine <= (obj_gt + abs(obj_gt)*1e-9), ...
+        sprintf('Laine solution was not optimal: worse by %e%%\n', 100*(obj_laine-obj_gt)/abs(obj_gt)));
 end
