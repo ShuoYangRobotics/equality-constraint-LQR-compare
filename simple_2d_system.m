@@ -74,7 +74,7 @@ h_list(:,param.Cx(1)) = -constraint_pt;
 Soln = ecLQR_sideris(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
 ySol = zeros(1,N);
-for i=1:N
+for i=1:(N+1)
     xSol(i) = Soln(i).x(1);
     ySol(i) = Soln(i).x(2);
 end
@@ -96,7 +96,7 @@ string = sprintf('Baseline Method 1 (Sideris) trajectory \n start (0,0) target(3
 title(string);
 
 subplot(3,3,4);
-plot(1:N, xSol,1:N, ySol)
+plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Baseline Method 1 state plot');
 legend('state(1)','state(2)')
 subplot(3,3,7);
@@ -107,7 +107,7 @@ legend('control')
 Soln = ecLQR_fg(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
 ySol = zeros(1,N);
-for i=1:N
+for i=1:(N+1)
     xSol(i) = Soln(i).x(1);
     ySol(i) = Soln(i).x(2);
 end
@@ -130,7 +130,7 @@ title(string);
 
 
 subplot(3,3,6);
-plot(1:N, xSol,1:N, ySol)
+plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Proposed factor graph method state plot');
 legend('state(1)','state(2)')
 subplot(3,3,9);
@@ -138,39 +138,11 @@ plot(1:N, uSol)
 title('Proposed factor graph method control plot');
 legend('control')
 
-%% 3. using Laine, constraint formulation is a little different 
-param.Cxu = [1,param.N/2];
-param.Cx = [param.N];
-nx = param.nx;
-nu = param.nu;
-ncxu = param.ncxu;
-ncx = param.ncx;
-A_list = zeros(nx,nx,N);  % from 0 to N-1
-B_list = zeros(nx,nu,N);  % from 0 to N-1
-C_list = zeros(ncxu, nx, N); % from 0 to N-1
-D_list = zeros(ncxu, nu, N); % from 0 to N-1
-G_list = zeros(ncx, nx, N);
-r_list = zeros(ncxu, N);
-h_list = zeros(ncx, N);
-for i=1:N
-    A_list(:,:,i) = param.A;
-    B_list(:,:,i) = param.B;
-    C_list(:,:,i) = zeros(ncxu, nx);
-    D_list(:,:,i) = zeros(ncxu, nu);  
-    G_list(:,:,i) = zeros(ncx, nx);
-    r_list(:,i) = zeros(ncxu, 1);
-    h_list(:,i) = zeros(ncx,1);
-end
-C_list(:,:,param.Cxu(1)) = eye(param.nx);
-r_list(:,param.Cxu(1)) = -param.x0;
-C_list(:,:,param.Cxu(2)) = eye(param.nx);
-r_list(:,param.Cxu(2)) = -constraint_pt;
-% G_list(:,:,param.Cx(1)) = eye(param.nx);
-% h_list(:,param.Cx(1)) = -param.xN;
+%% 3. using Laine
 Soln = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
 xSol = zeros(1,N);
 ySol = zeros(1,N);
-for i=1:N
+for i=1:(N+1)
     xSol(i) = Soln(i).x(1);
     ySol(i) = Soln(i).x(2);
 end
@@ -193,7 +165,7 @@ title(string);
 
 
 subplot(3,3,5);
-plot(1:N, xSol,1:N, ySol)
+plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Baseline Method 2 state plot');
 legend('state(1)','state(2)')
 subplot(3,3,8);

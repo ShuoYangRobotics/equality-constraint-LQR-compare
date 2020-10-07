@@ -47,8 +47,6 @@ X = [X gtsam.symbol('x', N+1)];
 
 % set initial state as prior
 graph.add(X(1), eye(nx), param.x0, prior_noise);
-% set final state as prior
-graph.add(X(N+1), eye(nx), xN, prior_noise);
 
 % Add dynamics constraint as ternary factor
 % A.x1 + B.u1 - I.x2 = 0
@@ -82,7 +80,7 @@ for i=1:N
     graph.add(U(i), eye(nu), zeros(nu,1), r_noise);
 end
 % set final state as cost
-graph.add(X(N+1), eye(nx), zeros(nx,1), qf_noise);
+graph.add(X(N+1), eye(nx), xN, qf_noise);
 
 result = graph.optimize();
 
@@ -98,5 +96,6 @@ for idx=1:N
     Soln(i).u = result.at(U(i));
     Soln(i).x = result.at(X(i));
 end
+Soln(N+1).x = result.at(X(N+1));
 
 end
