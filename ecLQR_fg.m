@@ -47,12 +47,10 @@ X = [X gtsam.symbol('x', N+1)];
 
 % set initial state as prior
 graph.add(X(1), eye(nx), param.x0, prior_noise);
-% set final state as prior
-graph.add(X(N+1), eye(nx), xN, prior_noise);
 
 % Add dynamics constraint as ternary factor
 % A.x1 + B.u1 - I.x2 = 0
-for i=1:N    
+for i=1:N
   graph.add(X(i), A_list(:,:,i), U(i), B_list(:,:,i), X(i+1), -eye(nx), zeros(nx,1), dynamics_noise);
 end
 
@@ -70,21 +68,36 @@ end
 
 
 % noises 
-q_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(Q)); % these may not be correct
-r_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(R));
-qf_noise = gtsam.noiseModel.Gaussian.SqrtInformation(sqrt(Qf));
-% q_noise = gtsam.noiseModel.Gaussian.SqrtInformation(Q);
-% r_noise = gtsam.noiseModel.Gaussian.SqrtInformation(R);
+q_noise = gtsam.noiseModel.Gaussian.Information(Q);
+r_noise = gtsam.noiseModel.Gaussian.Information(R);
+qf_noise = gtsam.noiseModel.Gaussian.Information(Qf);
 
 % state and control cost
-for i=1:N
-    graph.add(X(i), eye(nx), zeros(nx,1), q_noise);
-    graph.add(U(i), eye(nu), zeros(nu,1), r_noise);
+if isa(q_noise, 'gtsam.noiseModel.Diagonal') &&...
+   isa(r_noise, 'gtsam.noiseModel.Diagonal')
+    for i=1:N
+        graph.add(X(i), eye(nx), zeros(nx,1), q_noise);
+        graph.add(U(i), eye(nu), zeros(nu,1), r_noise);
+    end
+else
+    for i=1:N
+        graph.add(gtsam.HessianFactor(X(i), zeros(nx, 1), inv(Q)));
+        graph.add(gtsam.HessianFactor(U(i), zeros(nu, 1), inv(R)));
+    end
 end
 % set final state as cost
-graph.add(X(N+1), eye(nx), zeros(nx,1), qf_noise);
+graph.add(X(N+1), eye(nx), xN, qf_noise);
 
-result = graph.optimize();
+% set ordering as N+1...1
+ordering = gtsam.Ordering();
+ordering.push_back(X(N+1));
+for i = N:-1:1
+    ordering.push_back(X(i));
+    ordering.push_back(U(i));
+end
+
+% solve
+result = graph.optimize(ordering);
 
 % no variable elimination to get K list yet
 
@@ -98,5 +111,6 @@ for idx=1:N
     Soln(i).u = result.at(U(i));
     Soln(i).x = result.at(X(i));
 end
+Soln(N+1).x = result.at(X(N+1));
 
 end

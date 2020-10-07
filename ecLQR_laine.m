@@ -23,6 +23,11 @@ Q = param.Q;
 Qf = param.Qf;
 R = param.R;
 
+% convert Gx=h into Cx+Du=r format for Laine
+C_list = [C_list; G_list];
+D_list = [D_list; zeros(ncx, nu, N)];
+r_list = [r_list; h_list];
+
 % 2. init cost to go and constraint to go
 % use notations in paper 
 % cost to go is 0.5*x'*VxxT*x + vxlT*x 
