@@ -70,6 +70,40 @@ h_list(:,param.Cx(1)) = -constraint_pt;
 
 % solve the LQR 
 % unified input output struct 
+%% 0. using matlab quadprog
+Soln = ecLQR_qp(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
+xSol = zeros(1,N);
+ySol = zeros(1,N);
+for i=1:(N+1)
+    xSol(i) = Soln(i).x(1);
+    ySol(i) = Soln(i).x(2);
+end
+uSol = zeros(nu,N);
+for i=1:N
+    uSol(:,i) = Soln(i).u;
+end
+subplot(3,4,1); hold on;
+plot(xSol,ySol,'r-','LineWidth',3);
+plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
+plotConstraint(G_list(:, :, param.Cx(1)), h_list(:, param.Cx(1)));
+plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
+xLim = [-5,5];
+yLim = [-5,8];
+axis([xLim,yLim]); axis equal;
+finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
+vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
+string = sprintf('Baseline Method 0 (quadprog) trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f  constraint violation = %f', [finalcost, vio]);
+title(string);
+
+subplot(3,4,5);
+plot(1:(N+1), xSol,1:(N+1), ySol)
+title('Baseline Method 0 state plot');
+legend('state(1)','state(2)')
+subplot(3,4,9);
+plot(1:N, uSol)
+title('Baseline Method 0 control plot');
+legend('control')
+
 %% 1. using sideris method
 Soln = ecLQR_sideris(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
@@ -82,10 +116,10 @@ uSol = zeros(nu,N);
 for i=1:N
     uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).uff;
 end
-subplot(3,3,1); hold on;
+subplot(3,4,2); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
 plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plotConstraint(G_list(:, :, param.Cx(1)), h_list(:, param.Cx(1)));
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
@@ -95,14 +129,15 @@ vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list,
 string = sprintf('Baseline Method 1 (Sideris) trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f  constraint violation = %f', [finalcost, vio]);
 title(string);
 
-subplot(3,3,4);
+subplot(3,4,6);
 plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Baseline Method 1 state plot');
 legend('state(1)','state(2)')
-subplot(3,3,7);
+subplot(3,4,10);
 plot(1:N, uSol)
 title('Baseline Method 1 control plot');
 legend('control')
+
 %% 2. using factor graph
 Soln = ecLQR_fg(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
@@ -115,10 +150,10 @@ uSol = zeros(nu,N);
 for i=1:N
     uSol(:,i) = Soln(i).u;
 end
-subplot(3,3,3); hold on;
+subplot(3,4,3); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
 plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plotConstraint(G_list(:, :, param.Cx(1)), h_list(:, param.Cx(1)));
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
@@ -129,11 +164,11 @@ string = sprintf('Proposed factor graph method trajectory \n start (0,0) target(
 title(string);
 
 
-subplot(3,3,6);
+subplot(3,4,7);
 plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Proposed factor graph method state plot');
 legend('state(1)','state(2)')
-subplot(3,3,9);
+subplot(3,4,11);
 plot(1:N, uSol)
 title('Proposed factor graph method control plot');
 legend('control')
@@ -150,10 +185,10 @@ uSol = zeros(nu,N);
 for i=1:N
     uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).uff;
 end
-subplot(3,3,2); hold on;
+subplot(3,4,4); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
 plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plotConstraint(G_list(:, :, param.Cx(1)), h_list(:, param.Cx(1)));
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
@@ -164,11 +199,11 @@ string = sprintf('Baseline Method 2 (Laine) trajectory\n start (0,0) target(3,2)
 title(string);
 
 
-subplot(3,3,5);
+subplot(3,4,8);
 plot(1:(N+1), xSol,1:(N+1), ySol)
 title('Baseline Method 2 state plot');
 legend('state(1)','state(2)')
-subplot(3,3,8);
+subplot(3,4,12);
 plot(1:N, uSol)
 title('Baseline Method 2 control plot');
 legend('control')
@@ -180,7 +215,23 @@ legend('control')
 % simulate the system again using controller 
 
 
+function [] = plotConstraint(G, h)
 
+    nx = size(G, 2);
+    H = [eye(nx), zeros(nx);...
+         zeros(nx), eye(nx)];
+    z = [-100*ones(nx, 1);...
+         100*ones(nx, 1)];
+    sol = quadprog(H'*H, H'*z, [], [], [G,zeros(size(G));...
+                                        zeros(size(G)),G], -[h;h],...
+                   [],[],[],optimset('Display','Off'));
+    if (abs(sol(1)-sol(nx+1))<1e-6)
+        plot(sol(1), sol(2), 'go', 'MarkerSize', 10, 'LineWidth', 3);
+    else
+        plot(sol(1:nx:end), sol(2:nx:end), 'g:', 'LineWidth', 2);
+    end
+
+end
 
 
 
