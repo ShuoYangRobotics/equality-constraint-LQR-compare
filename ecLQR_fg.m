@@ -73,9 +73,17 @@ r_noise = gtsam.noiseModel.Gaussian.Information(R);
 qf_noise = gtsam.noiseModel.Gaussian.Information(Qf);
 
 % state and control cost
-for i=1:N
-    graph.add(X(i), eye(nx), zeros(nx,1), q_noise);
-    graph.add(U(i), eye(nu), zeros(nu,1), r_noise);
+if isa(q_noise, 'gtsam.noiseModel.Diagonal') &&...
+   isa(r_noise, 'gtsam.noiseModel.Diagonal')
+    for i=1:N
+        graph.add(X(i), eye(nx), zeros(nx,1), q_noise);
+        graph.add(U(i), eye(nu), zeros(nu,1), r_noise);
+    end
+else
+    for i=1:N
+        graph.add(gtsam.HessianFactor(X(i), zeros(nx, 1), inv(Q)));
+        graph.add(gtsam.HessianFactor(U(i), zeros(nu, 1), inv(R)));
+    end
 end
 % set final state as cost
 graph.add(X(N+1), eye(nx), xN, qf_noise);
