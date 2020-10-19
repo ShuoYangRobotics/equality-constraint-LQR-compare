@@ -1,4 +1,4 @@
-function Soln = ecLQR_fg(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
+function Soln = ecLQR_fg_cross(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
 %ECLQR_FG solve LQR with equality constraint using factor graph
 % It uses the general input output structure:
 % Inputs:
@@ -27,7 +27,6 @@ R = param.R;
 % 2. construct factor graph
 prior_noise = gtsam.noiseModel.Constrained.All(nx);
 dynamics_noise = gtsam.noiseModel.Constrained.All(nx);
-% dynamics_noise = gtsam.noiseModel.Gaussian.Covariance(0.0*eye(nx));
 control_noise = gtsam.noiseModel.Constrained.All(nu);
 
 constraint_x_noise = gtsam.noiseModel.Constrained.All(ncx);
@@ -55,15 +54,11 @@ for i=1:N
   graph.add(X(i), A_list(:,:,i), U(i), B_list(:,:,i), X(i+1), -eye(nx), zeros(nx,1), dynamics_noise);
 end
 
-% add additional state constraint
-for i=1:N    
-    if (ismember(i,Cx))
-        graph.add(X(i), G_list(:,:,i), -h_list(:,i), constraint_x_noise);
-    end  
+% add cross time constraint
+for i=1:20:N-10   
     
-    if (ismember(i,Cxu))
-        graph.add(X(i), C_list(:,:,i), U(i), D_list(:,:,i), -r_list(:,i), constraint_xu_noise);
-    end
+    graph.add(X(i), [0 0; 0 1], X(i+10), [0 0; 0 -1], zeros(nx,1), constraint_xu_noise);
+
     
 end
 

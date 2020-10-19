@@ -145,7 +145,7 @@ Soln(nSoln+1).x = zeros(nx,1);
 
 for i=1:nSoln
     Soln(i).K = K_list(:,:,i);
-    Soln(i).uff = k_list(:,i);
+    Soln(i).k = k_list(:,i);
     Soln(i).x = x_list(:,i);
 end
 Soln(N+1).x = x_list(:,N+1);
