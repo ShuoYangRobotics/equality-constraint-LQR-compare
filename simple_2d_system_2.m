@@ -1,11 +1,12 @@
-% init LQR problem, this is the simple example given by
-% Laine 2019 section 3.B
+% init LQR problem, this is a simple example.  Change the last argument of
+% ecLQR_laine from 0 to 1 to select whether to use the corrected version or
+% not
 
 clear; clc;
 % state size
 param.nx = 2;
 % control size
-param.nu = 1;
+param.nu = 2;
 % state and control related constraint size
 param.ncxu = 2;
 % state only constraint size
@@ -25,14 +26,15 @@ N = param.N;
 % system dynamics
 param.A = [1 dt;
            0  1];
-param.B = [0; 
-           dt];
+param.B = [0.62,0.23 ; 0.57,0.28];
+% param.B = rand(2);
+% param.B = [0;dt];
 
 % running cost terms
 param.Q = 1e-2*eye(param.nx);
 param.R = 1e-3*eye(param.nu);
 % final cost terms
-param.Qf = 500*eye(param.nx);
+param.Qf = 100*eye(param.nx);
 
 %% let's prepare a fancy plot to compare three methods
 figure(1); clf; hold on;
@@ -68,6 +70,9 @@ G_list(:,:,param.Cx(1)) = eye(param.nx);
 h_list(:,param.Cx(1)) = -constraint_pt;
 % h_list(:,param.Cx(2)) = -param.xN;
 
+G_list(:, 1, param.Cx(1)) = zeros(param.nx, 1);
+h_list(1, param.Cx(1)) = 0;
+
 % solve the LQR 
 % unified input output struct 
 %% 0. using matlab quadprog
@@ -92,7 +97,7 @@ yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 0 (quadprog) trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 0 (quadprog) trajectory \n start (0,0) target(%d,%d) must go through (2,-2) \n final cost = %f  constraint violation = %f', [param.xN', finalcost, vio]);
 title(string);
 
 subplot(3,4,5);
@@ -126,7 +131,7 @@ yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 1 (Sideris) trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 1 (Sideris) trajectory \n start (0,0) target(%d,%d) must go through (2,-2) \n final cost = %f  constraint violation = %f', [param.xN', finalcost, vio]);
 title(string);
 
 subplot(3,4,6);
@@ -160,7 +165,7 @@ yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Proposed factor graph method trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f constraint violation = %f', [finalcost, vio]);
+string = sprintf('Proposed factor graph method trajectory \n start (0,0) target(%d,%d) must go through (2,-2) \n final cost = %f constraint violation = %f', [param.xN', finalcost, vio]);
 title(string);
 
 
@@ -174,7 +179,7 @@ title('Proposed factor graph method control plot');
 legend('control')
 
 %% 3. using Laine
-Soln = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
+Soln = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list, 0);
 xSol = zeros(1,N);
 ySol = zeros(1,N);
 for i=1:(N+1)
@@ -195,7 +200,7 @@ yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 2 (Laine) trajectory\n start (0,0) target(3,2) must go through (2,-2) \n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 2 (Laine) trajectory\n start (0,0) target(%d,%d) must go through (2,-2) \n final cost =  %f  constraint violation = %f', [param.xN', finalcost, vio]);
 title(string);
 
 
