@@ -23,13 +23,14 @@ dt = param.dt;
 param.N = param.LQR_time / param.dt;
 N = param.N;
 % system dynamics
-param.A = eye(3) + dt *[-0.4762    0.0576   -0.8775
-   -0.1532   -0.9880    0.0183
-   -0.8659    0.1432    0.4793];
-param.B = [-0.6294   -0.4978   -0.5967
-   -0.3749   -0.4781    0.7943
-   -0.6807    0.7236    0.1143]*dt;
-
+% param.A = eye(3) + dt *[-0.4762    0.0576   -0.8775
+%    -0.1532   -0.9880    0.0183
+%    -0.8659    0.1432    0.4793];
+% % param.B = [-0.6294   -0.4978   -0.5967
+%    -0.3749   -0.4781    0.7943
+%    -0.6807    0.7236    0.1143]*dt;
+param.A = eye(3)+eye(3)*dt;
+param.B = eye(3)*dt;
 % running cost terms
 param.Q = 1e-2*eye(param.nx);
 param.R = 1e-3*eye(param.nu);
@@ -37,7 +38,7 @@ param.R = 1e-3*eye(param.nu);
 param.Qf = 500*eye(param.nx);
 
 % this controls how much noise in the system simulation
-param.simulation_noise = 0.0;
+param.simulation_noise = 0.05;
 
 %% 
 figure(1); clf; hold on;
@@ -69,7 +70,9 @@ end
 for i=1:N   
     if (ismember(i,param.Cxu))
         C_list(:,:,i) = eye(param.nx);
-        D_list(:,:,i) = eye(param.nu);
+        D_list(:,:,i) = [1 0 0
+                         0 1 0
+                         0 0 1];
         r_list(:,i) = [-1 1 -1];
     end
 end
