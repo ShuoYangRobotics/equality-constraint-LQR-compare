@@ -78,7 +78,7 @@ end
 
 % solve the LQR 
 
-
+font_size = 14;
 %% 1. using Laine
 Soln_l = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
 xSol = zeros(1,N);
@@ -91,7 +91,7 @@ uSol = zeros(nu,N);
 for i=1:N
     uSol(:,i) = Soln_l(i).K * Soln_l(i).x + Soln_l(i).k;
 end
-subplot(3,2,1); hold on;
+subplot(2,2,1); hold on;
 % plot(xSol,ySol,'r-','LineWidth',3);
 % plot(Soln_l(1).x(1),Soln_l(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
 % % plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
@@ -109,19 +109,20 @@ for i=1:N
     k_list(:,i) = Soln_l(i).k;
 end
 plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
-title('Baseline Method 2 optimal controller plot, u = Kx+k ');
-legend('K(1)','K(2)','k')
-set(gca,'fontsize', 12)
-
-
-subplot(3,2,3);
-plot(1:N, xSol(1:N),'r',1:N, ySol(1:N),'g',1:N, uSol,'b')
-finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
-vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 2 solved optimal trajectory plot, u = Kx+k\n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 2 \n optimal controller plot, u = Kx+k ');
 title(string);
-legend('x(1)','x(2)', 'control')
-set(gca,'fontsize', 12)
+legend('K(1)','K(2)','k')
+set(gca,'fontsize', font_size)
+
+
+% subplot(3,2,3);
+% plot(1:N, xSol(1:N),'r',1:N, ySol(1:N),'g',1:N, uSol,'b')
+% finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
+% vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
+% string = sprintf('Baseline Method 2 solved optimal trajectory plot, u = Kx+k\n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+% title(string);
+% legend('x(1)','x(2)', 'control')
+% set(gca,'fontsize', 12)
 
 % simulate the system
 x = param.x0;
@@ -130,18 +131,18 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = Soln_l(i).K * x + Soln_l(i).k;
-    x = param.A*x + param.B*(Soln_l(i).K * x + Soln_l(i).k) + randn(2,1)*0.02;
+    x = param.A*x + param.B*(Soln_l(i).K * x + Soln_l(i).k);
 end
 sim_x_list(:,N+1) = x;
 
 finalcost_l = getCost(N,sim_x_list(1,:),sim_x_list(2,:),sim_u_list,param.Q, param.R, param.Qf, param.xN);
 vio_l = getConViolate(N, param, sim_x_list, sim_u_list, C_list, D_list, G_list, r_list, h_list);
-subplot(3,2,5);
+subplot(2,2,3);
 plot(1:N, sim_x_list(1,1:end-1),'r',1:N, sim_x_list(2,1:end-1),'g',1:N, sim_u_list,'b')
-string = sprintf('Baseline Method 2 simulated trajectory and control plot, \n final cost =  %f  constraint violation = %f', [finalcost_l, vio_l]);
+string = sprintf('simulated trajectory and control plot, \n final cost =  %.2f  violation = %.2e', [finalcost_l, vio_l]);
 title(string);
 legend('x(1)','x(2)', 'control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 
 %% 2. using factor graph
@@ -156,7 +157,7 @@ uSol = zeros(nu,N);
 for i=1:N
     uSol(:,i) = -Soln_fg(i).K * Soln_fg(i).x + Soln_fg(i).k;
 end
-subplot(3,2,2); hold on;
+subplot(2,2,2); hold on;
 % plot(xSol,ySol,'r-','LineWidth',3);
 % plot(Soln_fg(1).x(1),Soln_fg(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
 % % plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
@@ -177,18 +178,20 @@ for i=1:N
     k_list(:,i) = Soln_fg(i).k;
 end
 plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
-title('Proposed method optimal controller plot, u = Kx+k ');
-legend('K(1)','K(2)','k')
-set(gca,'fontsize', 12)
 
-subplot(3,2,4);
-plot(1:N, xSol(1:N),'r',1:N, ySol(1:N),'g',1:N, uSol,'b')
-finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
-vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Proposed method solved optimal trajectory plot, u = Kx+k\n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Proposed method \n optimal controller plot, u = Kx+k ');
 title(string);
-legend('x(1)','x(2)', 'control')
-set(gca,'fontsize', 12)
+legend('K(1)','K(2)','k')
+set(gca,'fontsize', font_size)
+
+% subplot(3,2,4);
+% plot(1:N, xSol(1:N),'r',1:N, ySol(1:N),'g',1:N, uSol,'b')
+% finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
+% vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
+% string = sprintf('Proposed method solved optimal trajectory plot, u = Kx+k\n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+% title(string);
+% legend('x(1)','x(2)', 'control')
+% set(gca,'fontsize', 12)
 
 % simulate the system
 x = param.x0;
@@ -197,18 +200,18 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = -Soln_fg(i).K * x + Soln_fg(i).k;
-    x = param.A*x + param.B*(sim_u_list(:,i)) + randn(2,1)*0.02;
+    x = param.A*x + param.B*(sim_u_list(:,i));
 end
 sim_x_list(:,N+1) = x;
 
 finalcost_fg = getCost(N,sim_x_list(1,:),sim_x_list(2,:),sim_u_list,param.Q, param.R, param.Qf, param.xN);
 vio_fg = getConViolate(N, param, sim_x_list, sim_u_list, C_list, D_list, G_list, r_list, h_list);
-subplot(3,2,6);
+subplot(2,2,4);
 plot(1:N, sim_x_list(1,1:end-1),'r',1:N, sim_x_list(2,1:end-1),'g',1:N, sim_u_list,'b')
-string = sprintf('Proposed method simulated trajectory and control plot, \n final cost =  %f  constraint violation = %f', [finalcost_fg, vio_fg]);
+string = sprintf('simulated trajectory and control plot, \n final cost =  %.2f  violation = %.2e', [finalcost_fg, vio_fg]);
 title(string);
 legend('x(1)','x(2)', 'control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 % dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
 % simulate the system again using controller 

@@ -70,6 +70,7 @@ h_list(:,param.Cx(1)) = -constraint_pt;
 
 % solve the LQR 
 % unified input output struct 
+font_size = 14;
 %% 1. using sideris method
 Soln = ecLQR_sideris(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
@@ -92,9 +93,9 @@ yLim = [-5,8];
 axis([xLim,yLim]); 
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 1 (Sideris) trajectory \n final cost = %f  \n constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 1  \n final cost = %.2f \n  violation = %.2e', [finalcost, vio]);
 title(string);
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 subplot(2,3,4);
 plot(1:N, xSol(1:N),'g',1:N, ySol(1:N),'b',1:N, uSol,'r'); hold on;
@@ -102,7 +103,7 @@ plot(1:N, xSol(1:N),'g',1:N, ySol(1:N),'b',1:N, uSol,'r'); hold on;
 string = sprintf('Baseline Method 1 \n state and control plot');
 title(string);
 legend('x(1)','x(2)','control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 %% 2. using factor graph
 Soln = ecLQR_fg(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
@@ -114,6 +115,7 @@ for i=1:(N+1)
 end
 uSol = zeros(nu,N);
 for i=1:N
+%     uSol(:,i) = Soln(i).u;
     uSol(:,i) = -Soln(i).K * Soln(i).x + Soln(i).k;
 end
 subplot(2,3,3); hold on;
@@ -126,9 +128,9 @@ yLim = [-5,8];
 axis([xLim,yLim]); 
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Proposed factor graph method trajectory \n final cost = %f  \n constraint violation = %f', [finalcost, vio]);
+string = sprintf('Proposed factor graph method \n final cost = %.2f \n  violation = %.2e', [finalcost, vio]);
 title(string);
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 
 subplot(2,3,6);
@@ -137,7 +139,7 @@ plot(1:N, xSol(1:N),'g',1:N, ySol(1:N),'b',1:N, uSol,'r'); hold on;
 string = sprintf('Proposed factor graph method \n state and control plot');
 title(string);
 legend('x(1)','x(2)','control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 %% 3. using Laine
 Soln = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
 xSol = zeros(1,N);
@@ -160,9 +162,9 @@ yLim = [-5,8];
 axis([xLim,yLim]); 
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 2 (Laine) trajectory \n final cost =  %f  \n constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 2 \n final cost =  %.2f \n  violation = %.2e', [finalcost, vio]);
 title(string);
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 
 subplot(2,3,5);
@@ -170,7 +172,7 @@ plot(1:N, xSol(1:N),'g',1:N, ySol(1:N),'b',1:N, uSol,'r'); hold on;
 string = sprintf('Baseline Method 2 \n state and control plot');
 title(string);
 legend('x(1)','x(2)','control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', font_size)
 
 %% plot result
 % just plot solved trajectory
