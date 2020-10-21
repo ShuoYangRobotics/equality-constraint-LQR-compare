@@ -34,6 +34,9 @@ param.R = 1e-3*eye(param.nu);
 % final cost terms
 param.Qf = 500*eye(param.nx);
 
+% this controls how much noise in the system simulation
+param.simulation_noise = 0.05;
+
 %% let's prepare a fancy plot to compare three methods
 figure(1); clf; hold on;
 % init constraint and state list
@@ -131,7 +134,7 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = Soln_l(i).K * x + Soln_l(i).k;
-    x = param.A*x + param.B*(Soln_l(i).K * x + Soln_l(i).k);
+    x = param.A*x + param.B*(sim_u_list(:,i)) + randn(nx, 1)*param.simulation_noise;
 end
 sim_x_list(:,N+1) = x;
 
@@ -200,7 +203,7 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = -Soln_fg(i).K * x + Soln_fg(i).k;
-    x = param.A*x + param.B*(sim_u_list(:,i));
+    x = param.A*x + param.B*(sim_u_list(:,i)) + randn(nx, 1)*param.simulation_noise;
 end
 sim_x_list(:,N+1) = x;
 
@@ -213,7 +216,7 @@ title(string);
 legend('x(1)','x(2)', 'control')
 set(gca,'fontsize', font_size)
 
-% dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
+dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
 % simulate the system again using controller 
 
 

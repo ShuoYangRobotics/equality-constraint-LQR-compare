@@ -29,10 +29,12 @@ N = param.N;
 % % param.B = [-0.6294   -0.4978   -0.5967
 %    -0.3749   -0.4781    0.7943
 %    -0.6807    0.7236    0.1143]*dt;
-param.A = eye(3)+eye(3)*dt;
+param.A = eye(3)+[1 0 0 
+                  0 0 0
+                  0 0 0]*dt;
 param.B = [1 0
            0 1
-           0 0.2]*dt;
+           0 0]*dt;
 % running cost terms
 param.Q = 1e-2*eye(param.nx);
 param.R = 1e-3*eye(param.nu);
@@ -40,7 +42,7 @@ param.R = 1e-3*eye(param.nu);
 param.Qf = 500*eye(param.nx);
 
 % this controls how much noise in the system simulation
-param.simulation_noise = 0.0;
+param.simulation_noise = 0.05;
 
 %% 
 figure(1); clf; hold on;
@@ -229,7 +231,7 @@ title(string);
 legend('x(1)','x(2)', 'control')
 set(gca,'fontsize', font_size)
 
-% dlmwrite('three_by_two.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
+dlmwrite('three_by_two.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
 % simulate the system again using controller 
 
 
