@@ -148,7 +148,7 @@ for i=1:(N+1)
 end
 uSol = zeros(nu,N);
 for i=1:N
-    uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).uff;
+    uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).k;
 end
 subplot(3,3,2); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);

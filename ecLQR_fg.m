@@ -104,8 +104,9 @@ Soln(N).t = 0;
 Soln(N).u = zeros(nu,1);
 Soln(N).x = zeros(nu,1);
 
+% extract K matrices
 Soln(N+1).K = zeros(nx,nu);
-Soln(N+1).k = zeros(nu,1);
+Soln(N+1).k = zeros(1,nu);
 % no variable elimination to get K list yet
 
 ordering = gtsam.Ordering();
@@ -113,8 +114,11 @@ for idx = N:-1:1
     ordering.push_back(X(idx+1));
     ordering.push_back(U(idx));
     [b,~] = graph.eliminatePartialSequential(ordering);
-    Soln(idx).K = b.back().S();
-    Soln(idx).k = b.back().d;
+    R = b.back().R;
+    Soln(idx).K = R \ b.back().S();
+    Soln(idx).k = R \ b.back().d;
+%     assert(all(abs(b.back().R - eye(nu)) < 1e-9, 'all'),...
+%            'R matrix not identity');
 end
 
 
@@ -123,6 +127,13 @@ for idx=1:N
     i = N-idx+1;
     Soln(i).u = result.at(U(i));
     Soln(i).x = result.at(X(i));
+    % check: u = -K.x + k
+    Kerr = abs((-Soln(i).K * Soln(i).x + Soln(i).k) - Soln(i).u);
+    assert(all(Kerr < 1e-6, 'all'),...
+           'Incorrect K matrix calculation in Factor graph');
+    if (~all(Kerr < 1e-9, 'all'))
+        fprintf('Warning: numerical instability issues likely encountered\n');
+    end
 end
 Soln(N+1).x = result.at(X(N+1));
 

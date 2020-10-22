@@ -38,7 +38,8 @@ param.R = 1e-3*eye(param.nu);
 param.Qf = 500*eye(param.nx);
 
 % this controls how much noise in the system simulation
-param.simulation_noise = 0.05;
+param.simulation_noise = 0;
+dynamicsnoise = randn(N, param.nx)*param.simulation_noise;
 
 %% 
 figure(1); clf; hold on;
@@ -120,6 +121,8 @@ string = sprintf('Baseline Method 2 \n optimal controller plot, u = Kx+k ');
 title(string);
 % legend('K(1)','K(2)','k')
 set(gca,'fontsize', font_size)
+controller_laine.K = K_list;
+controller_laine.k = k_list;
 
 
 % subplot(3,2,3);
@@ -138,7 +141,7 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = Soln_l(i).K * x + Soln_l(i).k;
-    x = param.A*x + param.B*sim_u_list(:,i) + randn(nx, 1)*param.simulation_noise;
+    x = param.A*x + param.B*sim_u_list(:,i) + dynamicsnoise(i, :)';
 end
 sim_x_list(:,N+1) = x;
 
@@ -181,9 +184,11 @@ subplot(2,2,2); hold on;
 K_list = zeros(nu,nx,N);
 k_list = zeros(nu,N);
 for i=1:N
-    K_list(:,:,i) = Soln_l(i).K;
-    k_list(:,i) = Soln_l(i).k;
+    K_list(:,:,i) = Soln_fg(i).K;
+    k_list(:,i) = Soln_fg(i).k;
 end
+controller_fg.K = K_list;
+controller_fg.k = k_list;
 
 for i =1:nu
     for j = 1:nx
@@ -214,7 +219,7 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = -Soln_fg(i).K * x + Soln_fg(i).k;
-    x = param.A*x + param.B*(sim_u_list(:,i)) + randn(nx, 1)*param.simulation_noise;
+    x = param.A*x + param.B*(sim_u_list(:,i)) + dynamicsnoise(i, :)';
 end
 sim_x_list(:,N+1) = x;
 
@@ -230,12 +235,19 @@ set(gca,'fontsize', font_size)
 % dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
 % simulate the system again using controller 
 
+%% check if two controllers are identical
+assert(all(abs(controller_laine.K + controller_fg.K) < 1e-6, 'all'),...
+      'controller gains K not identical');
+assert(all(abs(controller_laine.k - controller_fg.k) < 1e-6, 'all'),...
+      'controller affine offsets k not identical');
+warn(all(abs(controller_laine.K + controller_fg.K) < 1e-9, 'all'),...
+      'controller gains K a little bit off');
+warn(all(abs(controller_laine.k - controller_fg.k) < 1e-9, 'all'),...
+      'controller affine offsets k a little bit off');
+fprintf('The controllers for Laine and FG are identical\n');
 
-
-
-
-
-
-
-
-
+function [] = warn(cond, msg)
+    if (~cond)
+        warning([msg,'\n']);
+    end
+end
