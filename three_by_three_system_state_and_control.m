@@ -3,17 +3,17 @@
 
 clear; clc;
 % state size
-param.nx = 2;
+param.nx = 3;
 % control size
-param.nu = 1;
+param.nu = 3;
 % state and control related constraint size
-param.ncxu = 2;
+param.ncxu = 3;
 % state only constraint size
 param.ncx = param.nx;
 % start point
-param.x0 = [0;0];     % always starts with 0
+param.x0 = [0;0;0];     % always starts with 0
 % goal point
-param.xN = [3;2];   
+param.xN = [-3;3;3];   
 % total time
 param.LQR_time = 1;
 % dt for dicretizing
@@ -23,11 +23,14 @@ dt = param.dt;
 param.N = param.LQR_time / param.dt;
 N = param.N;
 % system dynamics
-param.A = [1 dt;
-           0  1];
-param.B = [0; 
-           dt];
-
+% param.A = eye(3) + dt *[-0.4762    0.0576   -0.8775
+%    -0.1532   -0.9880    0.0183
+%    -0.8659    0.1432    0.4793];
+% % param.B = [-0.6294   -0.4978   -0.5967
+%    -0.3749   -0.4781    0.7943
+%    -0.6807    0.7236    0.1143]*dt;
+param.A = eye(3)+eye(3)*dt;
+param.B = eye(3)*dt;
 % running cost terms
 param.Q = 1e-2*eye(param.nx);
 param.R = 1e-3*eye(param.nu);
@@ -37,11 +40,8 @@ param.Qf = 500*eye(param.nx);
 % this controls how much noise in the system simulation
 param.simulation_noise = 0.05;
 
-%% let's prepare a fancy plot to compare three methods
+%% 
 figure(1); clf; hold on;
-% init constraint and state list
-% array contains indices \in [1,N] that has constraint impose
-constraint_pt = [2;-2];
 param.Cxu = [param.N/2];
 param.Cx = [];
 % param.Cx = [];
@@ -65,17 +65,15 @@ for i=1:N
     r_list(:,i) = zeros(ncxu, 1);
     h_list(:,i) = zeros(ncx,1);
 end
-% G_list(:,:,param.Cx(1)) = eye(param.nx);
-% G_list(:,:,param.Cx(2)) = eye(param.nx);
-% actual constraint 
-% h_list(:,param.Cx(1)) = -constraint_pt;
-% h_list(:,param.Cx(2)) = -param.xN;
+
 
 for i=1:N   
     if (ismember(i,param.Cxu))
         C_list(:,:,i) = eye(param.nx);
-        D_list(:,:,i) = [0;1];
-        r_list(:,i) = [-1 1];
+        D_list(:,:,i) = [1 0 0
+                         0 1 0
+                         0 0 1];
+        r_list(:,i) = [-1 1 -1];
     end
 end
 
@@ -105,16 +103,22 @@ subplot(2,2,1); hold on;
 
 
 % plot controller
-K_list = zeros(nx,N);
+K_list = zeros(nu,nx,N);
 k_list = zeros(nu,N);
 for i=1:N
-    K_list(:,i) = Soln_l(i).K;
+    K_list(:,:,i) = Soln_l(i).K;
     k_list(:,i) = Soln_l(i).k;
 end
-plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
+for i =1:nu
+    for j = 1:nx
+        plot(1:N, squeeze(K_list(i,j,:))); hold on;
+        plot(1:N, k_list(i,:)); hold on;
+    end
+end
+% plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
 string = sprintf('Baseline Method 2 \n optimal controller plot, u = Kx+k ');
 title(string);
-legend('K(1)','K(2)','k')
+% legend('K(1)','K(2)','k')
 set(gca,'fontsize', font_size)
 
 
@@ -134,11 +138,11 @@ sim_u_list = zeros(nu,N);
 for i=1:N
     sim_x_list(:,i) = x;
     sim_u_list(:,i) = Soln_l(i).K * x + Soln_l(i).k;
-    x = param.A*x + param.B*(sim_u_list(:,i)) + randn(nx, 1)*param.simulation_noise;
+    x = param.A*x + param.B*sim_u_list(:,i) + randn(nx, 1)*param.simulation_noise;
 end
 sim_x_list(:,N+1) = x;
 
-finalcost_l = getCost(N,sim_x_list(1,:),sim_x_list(2,:),sim_u_list,param.Q, param.R, param.Qf, param.xN);
+finalcost_l = getCost_2(N,sim_x_list,sim_u_list,param.Q, param.R, param.Qf, param.xN);
 vio_l = getConViolate(N, param, sim_x_list, sim_u_list, C_list, D_list, G_list, r_list, h_list);
 subplot(2,2,3);
 plot(1:N, sim_x_list(1,1:end-1),'r',1:N, sim_x_list(2,1:end-1),'g',1:N, sim_u_list,'b')
@@ -174,17 +178,24 @@ subplot(2,2,2); hold on;
 % title(string);
 
 % plot controller
-K_list = zeros(nx,N);
+K_list = zeros(nu,nx,N);
 k_list = zeros(nu,N);
 for i=1:N
-    K_list(:,i) = -Soln_fg(i).K;
-    k_list(:,i) = Soln_fg(i).k;
+    K_list(:,:,i) = Soln_l(i).K;
+    k_list(:,i) = Soln_l(i).k;
 end
-plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
 
+for i =1:nu
+    for j = 1:nx
+        plot(1:N, squeeze(K_list(i,j,:))); hold on;
+        plot(1:N, k_list(i,:)); hold on;
+    end
+end
+% plot(1:N, K_list(1,:),'r',1:N, K_list(2,:),'g',1:N, k_list,'b')
+% 
 string = sprintf('Proposed method \n optimal controller plot, u = Kx+k ');
 title(string);
-legend('K(1)','K(2)','k')
+% legend('K(1)','K(2)','k')
 set(gca,'fontsize', font_size)
 
 % subplot(3,2,4);
@@ -207,7 +218,7 @@ for i=1:N
 end
 sim_x_list(:,N+1) = x;
 
-finalcost_fg = getCost(N,sim_x_list(1,:),sim_x_list(2,:),sim_u_list,param.Q, param.R, param.Qf, param.xN);
+finalcost_fg = getCost_2(N,sim_x_list,sim_u_list,param.Q, param.R, param.Qf, param.xN);
 vio_fg = getConViolate(N, param, sim_x_list, sim_u_list, C_list, D_list, G_list, r_list, h_list);
 subplot(2,2,4);
 plot(1:N, sim_x_list(1,1:end-1),'r',1:N, sim_x_list(2,1:end-1),'g',1:N, sim_u_list,'b')
@@ -216,7 +227,7 @@ title(string);
 legend('x(1)','x(2)', 'control')
 set(gca,'fontsize', font_size)
 
-dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
+% dlmwrite('test.csv',[finalcost_l, vio_l,finalcost_fg, vio_fg],'delimiter',',','-append');
 % simulate the system again using controller 
 
 

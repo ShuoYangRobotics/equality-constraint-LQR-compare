@@ -93,9 +93,9 @@ yLim = [-2,6];
 axis([xLim,yLim]); 
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('final cost = %f \n constraint violation = %f', [finalcost, vio]);
+string = sprintf('final cost = %.2f constraint violation = %.2e', [finalcost, vio]);
 title(string);
-set(gca,'fontsize', 12)
+set(gca,'fontsize', 15)
 
 
 % subplot(1,2,2);
@@ -104,9 +104,10 @@ set(gca,'fontsize', 12)
 % legend('x(1)','x(2)')
 subplot(1,2,2);
 plot(1:N, uSol)
-title('control plot');
+string = sprintf('\n control input plot');
+title(string);
 legend('control')
-set(gca,'fontsize', 12)
+set(gca,'fontsize', 15)
 
 
 

@@ -96,11 +96,13 @@ for i=N:-1:1
         k_list(:,i) = k;
         K_list(:,:,i) = K;
     else
-        P = V(1:rankNut,:);
-        Z = V(rankNut+1:nu,:);
+        P = V(:,1:rankNut);
+        Z = V(:,rankNut+1:nu);
         % equation 17 and 18
-        K = -( P*pinv(Nut*P)*Nxt + Z*(Z'*Muut*Z)\Z'*Muxt );
-        k = -( P*pinv(Nut*P)*nlt + Z*(Z'*Muut*Z)\Z'*mult );
+        A = Z'*Muut*Z;
+        b = Z';
+        K = -( P*pinv(Nut*P)*Nxt + Z*(A\b)*Muxt );
+        k = -( P*pinv(Nut*P)*nlt + Z*(A\b)*mult );
         k_list(:,i) = k;
         K_list(:,:,i) = K;
     end
