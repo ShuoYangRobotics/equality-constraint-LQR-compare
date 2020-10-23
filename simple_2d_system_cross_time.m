@@ -83,6 +83,7 @@ for i=1:N
     end
     uSol(:,i) = -Soln(i).K(end-1:end) * Soln(i).x + Soln(i).k;
 end
+%% plot
 subplot(1,2,1); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
 plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
@@ -94,8 +95,12 @@ axis([xLim,yLim]);
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
 string = sprintf('final cost = %.2f constraint violation = %.2e', [finalcost, vio]);
-title(string);
+% title(string);
+title('Optimal Trajectory');% without Cross-time-step Constraints');
+% title('Optimal Trajectory with Cross-time-step Constraints');
 set(gca,'fontsize', 15)
+grid on
+xlabel('$x_1$', 'interpreter', 'latex');ylabel('$x_2$', 'interpreter', 'latex');
 
 
 % subplot(1,2,2);
@@ -106,15 +111,10 @@ subplot(1,2,2);
 plot(1:N, uSol)
 string = sprintf('\n control input plot');
 title(string);
-legend('control')
+% legend('control')
 set(gca,'fontsize', 15)
-
-
-
-
-
-
-
+grid on
+xlabel('time step (n)', 'interpreter', 'latex'); ylabel('u', 'interpreter', 'latex');
 
 
 

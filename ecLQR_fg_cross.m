@@ -55,10 +55,9 @@ for i=1:N
 end
 
 % add cross time constraint
-for i=1:20:N-10   
+for i=19:20:N-20   
     
-    graph.add(X(i), [0 0; 0 1], X(i+10), [0 0; 0 -1], zeros(nx,1), constraint_xu_noise);
-
+    graph.add(X(i), [0 0; 0 1], X(i+20), [0 0; 0 -1], [0; -0.5]+zeros(nx,1), constraint_xu_noise);
     
 end
 
