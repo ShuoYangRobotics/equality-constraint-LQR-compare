@@ -62,17 +62,17 @@ P_list = zeros(nx,nx,N+1);  % same as Q list
 z_list = zeros(nx,N+1);   % same as x_0_list
 M_list = zeros(nx,nx,N);
 P_list(:,:,N+1) = Qf;
-z_list(:,N+1) = -Qf*xN;  
+z_list(:,N+1) = -Qf*xN;  % .5(x-xN)'.Qf(x-xN) = .5x'.Qf.x - x'.(Qf.xN) + const
 
 for n = N:-1:1
     % equation 50
-    M_list(:,:,n) = inv(eye(nx) + Rhat_list(:,:,i)*P_list(:,:,n+1));
+    M_list(:,:,n) = inv(eye(nx) + Rhat_list(:,:,n)*P_list(:,:,n+1));
     % equation 51
-    P_list(:,:,n) = Qhat_list(:,:,i) + Ahat_list(:,:,i)'*P_list(:,:,n+1)*M_list(:,:,n)*Ahat_list(:,:,i);
+    P_list(:,:,n) = Qhat_list(:,:,n) + Ahat_list(:,:,n)'*P_list(:,:,n+1)*M_list(:,:,n)*Ahat_list(:,:,n);
     % equation 52
-    z_list(:,n) = Ahat_list(:,:,i)'*M_list(:,:,n)'*z_list(:,n+1) ...
-        + Ahat_list(:,:,i)'*P_list(:,:,n+1)*M_list(:,:,n)*un_0_hat_list(:,i) ...
-        + xn_0_hat_list(:,i);
+    z_list(:,n) = Ahat_list(:,:,n)'*M_list(:,:,n)'*z_list(:,n+1) ...
+        + Ahat_list(:,:,n)'*P_list(:,:,n+1)*M_list(:,:,n)*un_0_hat_list(:,n) ...
+        + xn_0_hat_list(:,n);
 end
 
 % 4. solve over all state constraints 
@@ -82,12 +82,12 @@ y_list = {};
 F_list = cell(length(Cx),length(Cx)); % 2d cell array
 
 for i=1:length(Cx)
-    k = Cx(i);   % constraint time index
-    Gamma_k = zeros(ncx,nx,k+1); % very cofusing, because we want to store 0 to k but matlab starts index from 1
-    Gamma_k(:,:,k+1) = G_list(:,:,k); % notice index of G_list
-    y_k = zeros(ncx,k+1);
-    y_k(:,k+1) = zeros(ncx,1);
-    for n = k:-1:1
+    k = Cx(i);   % constraint time index, 1 indexed
+    Gamma_k = zeros(ncx,nx,k); % very cofusing, because we want to store 0 to k but matlab starts index from 1
+    Gamma_k(:,:,k) = G_list(:,:,k); % notice index of G_list
+    y_k = zeros(ncx,k);
+    y_k(:,k) = zeros(ncx,1);
+    for n = k-1:-1:1 % loop from k-1 to 1
         % euqation 53
         Gamma_k(:,:,n) = Gamma_k(:,:,n+1)*M_list(:,:,n)*Ahat_list(:,:,n);
         % equation 54
@@ -102,12 +102,12 @@ for i=1:length(Cx)
     k = Cx(i);
     for l=1:length(Cx)
         j = Cx(l);
-        dim = min(k,j);
-        F_list{i,l} = zeros(ncx,ncx,length(Cx)+1);
+        dim = min(k,j)-1;
+        F_list{i,l} = zeros(ncx,ncx,dim+1);
         if (j < k)
-            F_list{i,l}(:,:,k+1) = zeros(ncx,ncx);
+            F_list{i,l}(:,:,k) = zeros(ncx,ncx);
         else
-            F_list{i,l}(:,:,j+1) = zeros(ncx,ncx);
+            F_list{i,l}(:,:,j) = zeros(ncx,ncx);
         end
         for n = dim:-1:1
             F_list{i,l}(:,:,n) = F_list{i,l}(:,:,n+1) ...
@@ -140,7 +140,9 @@ for i=1:length(Cx)
 end
 
 % v size ncx*length(Cx) , equation 56
-v = (-F)\(y+H);
+v = (-F)\(Gamma*param.x0 + y+H);
+v(isinf(v)) = 1e99 * sign(v(isinf(v))); % uncontrollable, but should zero out anyway
+v(isnan(v)) = 0; % uncontrollable but RHS is 0 anyway
 
 % equation 57
 s_list = zeros(nx,N+1);
