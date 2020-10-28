@@ -24,9 +24,9 @@ Qf = param.Qf;
 R = param.R;
 
 % convert Gx=h into Cx+Du=r format for Laine
-C_list = [C_list; G_list];
+C_list = [C_list; G_list(:, :, 1:N)];
 D_list = [D_list; zeros(ncx, nu, N)];
-r_list = [r_list; h_list];
+r_list = [r_list; h_list(:, 1:N)];
 
 % 2. init cost to go and constraint to go
 % use notations in paper 
@@ -35,8 +35,8 @@ r_list = [r_list; h_list];
 % 2.1 equation 9
 VxxT = Qf;
 vxlT = -Qf*xN;
-HxT = G_list(:,:,N);
-hlT = h_list(:,N);
+HxT = G_list(:,:,N+1);
+hlT = h_list(:,N+1);
 
 % cost to go and costraint to go during iteration
 Vxxt1 = VxxT;

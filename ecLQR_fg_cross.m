@@ -1,4 +1,4 @@
-function Soln = ecLQR_fg_cross(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
+function Soln = ecLQR_fg_cross(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list, S_list)
 %ECLQR_FG solve LQR with equality constraint using factor graph
 % It uses the general input output structure:
 % Inputs:
@@ -55,11 +55,29 @@ for i=1:N
 end
 
 % add cross time constraint
-for i=19:20:N-20   
-    
-    graph.add(X(i), [0 0; 0 1], X(i+20), [0 0; 0 -1], [0; -0.5]+zeros(nx,1), constraint_xu_noise);
-    
+for S = S_list
+    S = S{1};
+    args = {};
+    for xi = 1:length(S.xn)
+        args{end+1} = X(S.xn(xi));
+        args{end+1} = S.xmat(:, :, xi);
+    end
+    for ui = 1:length(S.un)
+        args{end+1} = U(S.un(ui));
+        args{end+1} = S.umat(:, :, ui);
+    end
+    assert (length(args) >= 2 && length(args) <= 6,...
+            'GTSAM matlab api does not currently support the n-ary constructor of Jacobian Factor');
+    graph.add(args{:}, S.rhs, constraint_xu_noise);
 end
+
+% for i=19:20:N-20   
+    
+%     graph.add(X(i), [0 0; 0 1], X(i+20), [0 0; 0 -1], [0; -0.5]+zeros(nx,1), constraint_xu_noise);
+% %     graph.add(X(i+10), [0 0; 0 1], X(i+20), [0 0; 0 -1], zeros(nx,1), constraint_xu_noise);
+% %     graph.add(X(i), [0,1], zeros(1), constraint_x_noise);
+    
+% end
 
 
 % noises 
@@ -98,8 +116,9 @@ Soln(N).t = 0;
 Soln(N).u = zeros(nu,1);
 Soln(N).x = zeros(nu,1);
 
+% extract K matrices
 Soln(N+1).K = zeros(nx,nu);
-Soln(N+1).k = zeros(nu,1);
+Soln(N+1).k = zeros(1,nu);
 % no variable elimination to get K list yet
 
 ordering = gtsam.Ordering();
@@ -107,16 +126,32 @@ for idx = N:-1:1
     ordering.push_back(X(idx+1));
     ordering.push_back(U(idx));
     [b,~] = graph.eliminatePartialSequential(ordering);
-    Soln(idx).K = b.back().S();
-    Soln(idx).k = b.back().d;
+    R = b.back().R;
+    Soln(idx).K = R \ b.back().S();
+    Soln(idx).k = R \ b.back().d;
+    % cross-timestep constraints break Markov property, so u(n) is dependent upon multiple x(ns)
+    % store x(ns) in Soln.nset
+    kv = b.back().keys();  % KeyVector
+    Soln(idx).nset = zeros(kv.size-1, 1, 'uint64');
+    for ki = 1:kv.size-1
+        Soln(idx).nset(ki) = gtsam.symbolIndex(kv.at(ki)); % note: kv is 0 indexed
+    end
 end
 
 
 
 for idx=1:N
-    i = N-idx+1;
+    i = idx;
     Soln(i).u = result.at(U(i));
     Soln(i).x = result.at(X(i));
+    % check: u = -K.x + k
+    Kerr = abs((-Soln(i).K * reshape([Soln(Soln(i).nset).x], [], 1)...
+                + Soln(i).k) - Soln(i).u);
+    assert(all(Kerr < 1e-6, 'all'),...
+           'Incorrect K matrix calculation in Factor graph');
+    if (~all(Kerr < 1e-9, 'all'))
+        fprintf('Warning: numerical instability issues likely encountered\n');
+    end
 end
 Soln(N+1).x = result.at(X(N+1));
 
