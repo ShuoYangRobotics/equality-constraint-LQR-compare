@@ -14,6 +14,8 @@
 
 namespace ecLqr {
 
+using gtsam::GaussianFactorGraph;
+
 /**
  *  Creates a Gaussian Factor Graph (gfg) that represents a finite horizon
  * rollout of the LTI system given by xdot = A.x + B.u, where A is an nxn matrix
@@ -24,7 +26,7 @@ namespace ecLqr {
  * 0...T and u for timesteps 0...T-1
  */
 template <int N, int M>
-gtsam::GaussianFactorGraph GfgFromStateSpace(
+GaussianFactorGraph GfgFromStateSpace(
     const Eigen::Matrix<double, N, N> &A, const Eigen::Matrix<double, N, M> &B,
     size_t T);
 
@@ -39,10 +41,10 @@ gtsam::GaussianFactorGraph GfgFromStateSpace(
  * 0...T and u for timesteps 0...T-1
  */
 template <int N, int M>
-gtsam::GaussianFactorGraph GfgFromStateSpace(
+GaussianFactorGraph GfgFromStateSpace(
     const std::vector<Eigen::Matrix<double, N, N>> &A,
     const std::vector<Eigen::Matrix<double, N, M>> &B, size_t T);
 
 }  // namespace ecLqr
 
-#include "Lti-impl.h"
+#include "EcLqr_fg-impl.h"

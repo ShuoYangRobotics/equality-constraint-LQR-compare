@@ -15,7 +15,7 @@
  * @date    Nov 5, 2010
  */
 
-#include <src/Lti.h>
+#include <src/EcLqr_fg.h>
 
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/base/Matrix.h>
@@ -60,10 +60,12 @@ TEST(Lti, nonconstantABmatrices) {
   vector<Matrix63> Bs;
   size_t T = 10;
   for (size_t t = 0; t < T; ++t) {
-    As.push_back(I_6x6);
+    auto I = I_6x6;
+    As.push_back(I);
     Bs.push_back((Matrix63() << I_3x3, I_3x3).finished());
     As[t](0, 1) = t;
   }
+
   auto graph = GfgFromStateSpace(As, Bs, T);
 
   EXPECT(assert_equal(T, graph.size()));
