@@ -35,7 +35,7 @@ TEST(EcLqr, lqr_factorgraph) {
   double Tf = 1;
   size_t T = Tf / dt;
 
-  EcLqrParams<2, 1, 2, 2> params;
+  EcLqrParams<2, 1> params;
   params.T = T;
   params.x0 = Z_2x1;
   params.xf = (Vector2() << 3, 2).finished();
@@ -44,7 +44,7 @@ TEST(EcLqr, lqr_factorgraph) {
   params.Q = 1e-2 * I_2x2;
   params.R = 1e-3 * I_1x1;
   params.Qf = 500 * I_2x2;
-  EcLqrParams<2, 1, 2, 2>::XConstraint xConstraint{
+  EcLqrParams<2, 1>::XConstraint xConstraint{
       I_2x2, -(Vector2() << 2, -2).finished(), T / 2 - 1};
   params.xConstraints.emplace_back(xConstraint);
 
