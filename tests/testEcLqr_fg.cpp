@@ -5,6 +5,7 @@
  * @author  Yetong Zhang
  */
 
+#include <src/EcLqrParams.h>
 #include <src/EcLqr_fg.h>
 
 #include <gtsam/inference/Symbol.h>
