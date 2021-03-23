@@ -15,8 +15,10 @@
 namespace ecLqr {
 
 using gtsam::GaussianFactorGraph;
+using gtsam::Matrix;
+using gtsam::Vector;
 
-template <int N, int M, int ncx, int ncxu>
+template <int N, int M>
 struct EcLqrParams {
   typedef Eigen::Matrix<double, N, 1> VectorN;
 	size_t T;
@@ -29,16 +31,16 @@ struct EcLqrParams {
   Eigen::Matrix<double, M, M> R;
 
   struct XUConstraint {
-    Eigen::Matrix<double, ncxu, N> C;
-    Eigen::Matrix<double, ncxu, M> D;
-    Eigen::Matrix<double, ncxu, 1> r;
+    Matrix C;
+    Matrix D;
+    Vector r;
     size_t t;
   };
   std::vector<XUConstraint> xuConstraints;
 
   struct XConstraint {
-    Eigen::Matrix<double, ncx, N> G;
-    Eigen::Matrix<double, ncx, 1> h;
+    Matrix G;
+    Vector h;
     size_t t;
   };
   std::vector<XConstraint> xConstraints;
@@ -46,8 +48,8 @@ struct EcLqrParams {
 
 
 
-template <int N, int M, int ncx, int ncxu>
-GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M, ncx, ncxu> &params);
+template <int N, int M>
+GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M> &params);
 
 template <int N, int M>
 GaussianFactorGraph GfgFromObjectives(

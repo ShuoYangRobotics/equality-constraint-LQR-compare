@@ -20,18 +20,13 @@ using gtsam::noiseModel::Gaussian;
 using gtsam::noiseModel::Diagonal;
 using gtsam::Symbol;
 
-template <int N, int M, int ncx, int ncxu>
-GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M, ncx, ncxu> &params) {
+template <int N, int M>
+GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M> &params) {
   GaussianFactorGraph graph;
 
   // noise models
   auto priorNm = Constrained::All(N);
   auto dynamicsNm = Constrained::All(N);
-  auto constraintXNm = Constrained::All(ncx);
-  auto constraintXUNm = Constrained::All(ncxu);
-  // auto qNm = Gaussian::Information(params.Q);
-  // auto qfNm = Gaussian::Information(params.Qf);
-  // auto rNm = Gaussian::Information(params.R);
   // TODO: handle non-diagonal case
   auto qNm = Diagonal::Precisions(params.Q.diagonal());
   auto qfNm = Diagonal::Precisions(params.Qf.diagonal());
@@ -62,10 +57,10 @@ GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M, ncx, ncxu> &params) {
 
   // state constraints
   for (const auto &c : params.xConstraints)
-    graph.add(Symbol('x', c.t), c.G, -c.h, constraintXNm);
+    graph.add(Symbol('x', c.t), c.G, -c.h, Constrained::All(c.G.rows()));
   for (const auto &c : params.xuConstraints)
     graph.add(Symbol('x', c.t), c.C, Symbol('u', c.t), c.D, -c.r,
-              constraintXUNm);
+              Constrained::All(c.C.rows()));
 
   // final objective
   graph.add(Symbol('x', params.T), INxN, params.xf, qfNm);
