@@ -56,6 +56,35 @@ TEST(Lti, constantABmatrices) {
 
 /* ************************************************************************* */
 TEST(Lti, nonconstantABmatrices) {
+  vector<Matrix66> As;
+  vector<Matrix63> Bs;
+  size_t T = 10;
+  for (size_t t = 0; t < T; ++t) {
+    As.push_back(I_6x6);
+    Bs.push_back((Matrix63() << I_3x3, I_3x3).finished());
+    As[t](0, 1) = t;
+  }
+  auto graph = GfgFromStateSpace(As, Bs, T);
+
+  EXPECT(assert_equal(T, graph.size()));
+
+  size_t t = 0;
+  for (const auto &factor : graph) {
+    KeyVector expected_keys;
+    expected_keys.push_back(Symbol('x', t));
+    expected_keys.push_back(Symbol('u', t));
+    expected_keys.push_back(Symbol('x', t+1));
+
+    EXPECT(expected_keys == factor->keys());
+
+    Matrix expected_jacobian = (Matrix(16, 6) << As[t].transpose(),
+                                Bs[t].transpose(), -I_6x6, Matrix16::Zero())
+                                   .finished()
+                                   .transpose();
+    EXPECT(assert_equal(expected_jacobian, factor->augmentedJacobian()));
+
+    ++t;
+  }
 }
 
 /* ************************************************************************* */

@@ -1,6 +1,6 @@
 ###################################################################################
 cmake_minimum_required(VERSION 3.0)
-project(ecLqr CXX C)
+project(ecLqr CXX)
 
 # Include GTSAM CMake tools
 find_package(GTSAMCMakeTools)
@@ -22,7 +22,9 @@ find_package(GTSAM REQUIRED) # Uses installed package
 ###################################################################################
 # Build static library from common sources
 set(LIB_NAME ${PROJECT_NAME})
-add_library(${LIB_NAME} SHARED src/Lti.h src/Lti.cpp)
+file(GLOB headers "src/*.h")
+file(GLOB sources "src/*.cpp")
+add_library(${LIB_NAME} SHARED ${headers} ${sources})
 target_link_libraries(${LIB_NAME} gtsam)
 
 # Install library

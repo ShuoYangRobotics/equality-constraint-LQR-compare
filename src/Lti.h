@@ -23,8 +23,10 @@ namespace ecLqr {
  * @param T The number of timesteps to use.  This will simulate x for timesteps
  * 0...T and u for timesteps 0...T-1
  */
-gtsam::GaussianFactorGraph GfgFromStateSpace(const gtsam::Matrix &A,
-                                             const gtsam::Matrix &B, size_t T);
+template <int N, int M>
+gtsam::GaussianFactorGraph GfgFromStateSpace(
+    const Eigen::Matrix<double, N, N> &A, const Eigen::Matrix<double, N, M> &B,
+    size_t T);
 
 /**
  *  Creates a Gaussian Factor Graph (gfg) that represents a finite horizon
@@ -36,8 +38,11 @@ gtsam::GaussianFactorGraph GfgFromStateSpace(const gtsam::Matrix &A,
  * @param T The number of timesteps to use.  This will simulate x for timesteps
  * 0...T and u for timesteps 0...T-1
  */
+template <int N, int M>
 gtsam::GaussianFactorGraph GfgFromStateSpace(
-    const std::vector<gtsam::Matrix> &A, const std::vector<gtsam::Matrix> &B,
-    size_t T);
+    const std::vector<Eigen::Matrix<double, N, N>> &A,
+    const std::vector<Eigen::Matrix<double, N, M>> &B, size_t T);
 
 }  // namespace ecLqr
+
+#include "Lti-impl.h"
