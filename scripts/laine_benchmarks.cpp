@@ -79,8 +79,10 @@ int main(int argc, char* argv[]) {
     start = high_resolution_clock::now();
     gttic_(fg);
     auto graph = GfgFromParams(params);
-    // auto result = fgSolFromGfg(graph);
-    auto gains = fgGainsFromGfg<N, M>(graph, params.T);
+    // auto result = fgSolFromParams(params);
+    // auto gains = fgGainsFromGfg<N, M>(graph, params.T);
+    auto bn = BnFromGfg(graph, params.T);
+    auto gains = fgGainsFromBn<N, M>(bn, params.T);
     gttoc_(fg);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
@@ -88,12 +90,15 @@ int main(int argc, char* argv[]) {
 
     start = high_resolution_clock::now();
     gttic_(laine);
-    auto result2 = laineSolFromParams(params);
+    // auto results2 = laineSolFromParams(params);
+    auto gains2 = laineGainsFromParams(params);
     gttoc_(laine);
     tictoc_finishedIteration_();
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
     laine_total_us += duration.count();
+
+    assert_equal(laineSolFromGains(gains2, params), fgSolFromBn(bn));
   }
 
   cout << "GTSAM timing measurements (over " << ITER << " trials):" << endl;

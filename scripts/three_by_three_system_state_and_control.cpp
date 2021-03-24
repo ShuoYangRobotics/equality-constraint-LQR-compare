@@ -46,7 +46,8 @@ int main(int argc, char* argv[]) {
 
     start = high_resolution_clock::now();
     gttic_(laine);
-    auto result2 = laineSolFromParams(params);
+    auto gains2 = laineGainsFromParams(params);
+    auto result2 = laineSolFromGains(gains2, params);
     gttoc_(laine);
     tictoc_finishedIteration_();
     stop = high_resolution_clock::now();

@@ -72,18 +72,8 @@ GaussianFactorGraph GfgFromParams(const EcLqrParams<N, M> &params) {
   return graph;
 }
 
-VectorValues fgSolFromGfg(const GaussianFactorGraph &graph) {
-  gttic_(optimize);
-  return graph.optimize();
-}
-
-template <int N, int M>
-Gains<N, M> fgGainsFromGfg(const GaussianFactorGraph &graph, size_t T) {
-  gttic_(calculate_gains);
-  Gains<N, M> gains;
-  gains.first.reserve(T);
-  gains.second.reserve(T);
-
+gtsam::GaussianBayesNet::shared_ptr BnFromGfg(const GaussianFactorGraph &graph,
+                                              size_t T) {
   // set ordering to x_T, u_{T-1}, x_{T-1}, ..., x_0
   gtsam::Ordering ordering;
   ordering += Symbol('x', T);
@@ -91,9 +81,36 @@ Gains<N, M> fgGainsFromGfg(const GaussianFactorGraph &graph, size_t T) {
     ordering += Symbol('u', t);
     ordering += Symbol('x', t);
   }
-  // eliminate, TODO(gerry): figure out if we can do this with multifrontal
-  auto net = graph.eliminateSequential(ordering);
+  // eliminate
+  gttic_(eliminate);
+  return graph.eliminateSequential(ordering);
+}
+
+VectorValues fgSolFromGfg(const GaussianFactorGraph &graph) {
+  gttic_(eliminate_and_optimize);
+  return graph.optimize();
+}
+
+VectorValues fgSolFromBn(const gtsam::GaussianBayesNet::shared_ptr &net) {
+  gttic_(fg_optimize_aka_forwardpass);
+  return net->optimize();
+}
+
+template <int N, int M>
+Gains<N, M> fgGainsFromGfg(const GaussianFactorGraph &graph, size_t T) {
+  gttic_(gains_from_gfg);
+  return fgGainsFromBn<N, M>(BnFromGfg(graph, T), T);
+}
+
+template <int N, int M>
+Gains<N, M> fgGainsFromBn(const gtsam::GaussianBayesNet::shared_ptr &net,
+                          size_t T) {
+  gttic_(calculate_gains);
+  Gains<N, M> gains;
+  gains.first.reserve(T);
+  gains.second.reserve(T);
   // extract K/k from GaussianConditionals
+  // TODO(gerry): figure out if we can do this with multifrontal
   for (size_t t = 0; t < T; ++t) {
     const auto &cond = net->at((T - t) * 2 - 1);
     const auto &R = cond->R().triangularView<Eigen::Upper>();

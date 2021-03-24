@@ -22,6 +22,30 @@ using gtsam::Symbol;
 template <int N, int M>
 VectorValues laineSolFromParams(const EcLqrParams<N, M> &params) {
   gttic_(solve);
+  return laineSolFromGains(laineGainsFromParams(params), params);
+}
+
+template <int N, int M>
+gtsam::VectorValues laineSolFromGains(const Gains<N, M> &gains,
+                                      const EcLqrParams<N, M> &params) {
+  gttic_(calculate_openloop_forwardpass);
+  // forward pass to calculate (open-loop) x/u
+  gtsam::VectorValues sol;
+  Eigen::Matrix<double, N, 1> x = params.x0;
+  Eigen::Matrix<double, M, 1> u;
+  for (size_t t = 0; t < params.T; ++t) {
+    sol.emplace(Symbol('x', t), x);
+    u = gains.first[t] * x + gains.second[t];
+    sol.emplace(Symbol('u', t), u);
+    x = params.A * x + params.B * u;
+  }
+  sol.emplace(Symbol('x', params.T), x);
+  return sol;
+}
+
+template <int N, int M>
+Gains<N, M> laineGainsFromParams(const EcLqrParams<N, M> &params) {
+  gttic_(calculate_gains);
   using Eigen::Matrix;
   using Eigen::MatrixXd;
 
@@ -47,12 +71,9 @@ VectorValues laineSolFromParams(const EcLqrParams<N, M> &params) {
   }
 
   // 3. backwards pass to calculate K & k matrices
-  typedef Matrix<double, M, N> KMatrix;
-  typedef Matrix<double, M, 1> kMatrix;
-  std::vector<KMatrix, Eigen::aligned_allocator<KMatrix> > Ks;
-  std::vector<kMatrix, Eigen::aligned_allocator<kMatrix> > ks;
-  Ks.reserve(T);
-  ks.reserve(T);
+  Gains<N, M> gains;
+  gains.first.reserve(T);
+  gains.second.reserve(T);
   // iterate
   for (int t = T - 1; t >= 0; --t) {
     // eq. 12
@@ -83,8 +104,8 @@ VectorValues laineSolFromParams(const EcLqrParams<N, M> &params) {
     nlt = (MatrixXd(nrows, 1) << r, h, hlt1).finished();
 
     // Compute K / k
-    Matrix<double, M, N> &K = Ks[t];
-    Matrix<double, M, 1> &k = ks[t];
+    Matrix<double, M, N> &K = gains.first[t];
+    Matrix<double, M, 1> &k = gains.second[t];
     if (nrows == 0) {
       // unconstrained case.  Note: svd segfaults when nrows == 0
       const MatrixXd prefix = Muut.inverse();
@@ -171,18 +192,7 @@ VectorValues laineSolFromParams(const EcLqrParams<N, M> &params) {
     }
   }
 
-  // 4. forward pass to calculate (open-loop) x/u
-  gtsam::VectorValues sol;
-  Matrix<double, N, 1> x = params.x0;
-  Matrix<double, M, 1> u;
-  for (size_t t = 0; t < T; ++t) {
-    sol.emplace(Symbol('x', t), x);
-    u = Ks[t] * x + ks[t];
-    sol.emplace(Symbol('u', t), u);
-    x = A * x + B * u;
-  }
-  sol.emplace(Symbol('x', T), x);
-  return sol;
+  return gains;
 }
 
 }  // namespace ecLqr

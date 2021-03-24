@@ -10,6 +10,8 @@
 
 #include <gtsam/base/Matrix.h>
 
+#include <Eigen/StdVector>
+
 #include <map>
 
 namespace ecLqr {
@@ -44,7 +46,10 @@ struct EcLqrParams {
 };
 
 template <int N, int M>
-using Gains = std::pair<std::vector<Eigen::Matrix<double, M, N> >,
-                        std::vector<Eigen::Matrix<double, M, 1> > >;
+using Gains = std::pair<
+    std::vector<Eigen::Matrix<double, M, N>,
+                Eigen::aligned_allocator<Eigen::Matrix<double, M, N>>>,
+    std::vector<Eigen::Matrix<double, M, 1>,
+                Eigen::aligned_allocator<Eigen::Matrix<double, M, 1>>>>;
 
 }  // namespace ecLqr

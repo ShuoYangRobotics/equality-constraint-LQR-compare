@@ -28,11 +28,15 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 1000; ++i) {
       gttic_(fg);
       auto graph = GfgFromParams(params);
-      auto result = fgSolFromGfg(graph);
-      auto gains = fgGainsFromGfg<2, 1>(graph, params.T);
+      // auto gains = fgGainsFromGfg<2, 1>(graph, params.T);
+      // auto result = fgSolFromGfg(graph);
+      auto bn = BnFromGfg(graph, params.T);
+      auto gains = fgGainsFromBn<2, 1>(bn, params.T);
+      auto result = fgSolFromBn(bn);
       gttoc_(fg);
       gttic_(laine);
-      auto result2 = laineSolFromParams(params);
+      auto gains2 = laineGainsFromParams(params);
+      auto result2 = laineSolFromGains(gains2, params);
       gttoc_(laine);
     }
   }
