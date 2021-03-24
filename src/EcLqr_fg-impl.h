@@ -56,10 +56,10 @@ GaussianFactorGraph GfgFromEcLqr(const EcLqrParams<N, M> &params) {
   }
 
   // state constraints
-  for (const auto &c : params.xConstraints)
-    graph.add(Symbol('x', c.t), c.G, -c.h, Constrained::All(c.G.rows()));
-  for (const auto &c : params.xuConstraints)
-    graph.add(Symbol('x', c.t), c.C, Symbol('u', c.t), c.D, -c.r,
+  for (const auto &[t, c] : params.xConstraints)
+    graph.add(Symbol('x', t), c.G, -c.h, Constrained::All(c.G.rows()));
+  for (const auto &[t, c] : params.xuConstraints)
+    graph.add(Symbol('x', t), c.C, Symbol('u', t), c.D, -c.r,
               Constrained::All(c.C.rows()));
 
   // final objective
