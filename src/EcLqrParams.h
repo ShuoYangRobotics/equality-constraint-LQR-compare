@@ -43,4 +43,8 @@ struct EcLqrParams {
   std::map<size_t, XConstraint> xConstraints;
 };
 
+template <int N, int M>
+using Gains = std::pair<std::vector<Eigen::Matrix<double, M, N> >,
+                        std::vector<Eigen::Matrix<double, M, 1> > >;
+
 }  // namespace ecLqr

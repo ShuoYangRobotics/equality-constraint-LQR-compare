@@ -32,6 +32,15 @@ GaussianFactorGraph GfgFromParams(const EcLqrParams<N, M> &params);
  */
 VectorValues fgSolFromGfg(const GaussianFactorGraph &graph);
 
+/**
+ * Returns the gain matrices for a factor graph.
+ * @param graph The factor graph
+ * @return  The K matrices (MxN) and k vectors (Mx1) stored in std::vectors of
+ * length T, and the two vectors are stored in a std::pair.
+ */
+template <int N, int M>
+Gains<N, M> fgGainsFromGfg(const GaussianFactorGraph &graph, size_t T);
+
 }  // namespace ecLqr
 
 #include "EcLqr_fg-impl.h"

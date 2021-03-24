@@ -23,8 +23,6 @@ using namespace gtsam;
 using namespace std;
 using namespace std::chrono;
 
-#define N 3
-#define M 3
 #define ITER 100
 
 int main(int argc, char* argv[]) {
@@ -40,7 +38,7 @@ int main(int argc, char* argv[]) {
     start = high_resolution_clock::now();
     gttic_(fg);
     auto graph = GfgFromParams(params);
-    auto result = graph.optimize();
+    auto gains = fgGainsFromGfg<3, 3>(graph, params.T);
     gttoc_(fg);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
@@ -55,6 +53,7 @@ int main(int argc, char* argv[]) {
     duration = duration_cast<microseconds>(stop - start);
     laine_total_us += duration.count();
 
+    auto result = fgSolFromGfg(graph); // not timed, since gains is timed
     assert_equal(result, result2);
   }
 

@@ -11,6 +11,7 @@
 
 #include <gtsam/base/Matrix.h>
 #include <gtsam/linear/GaussianFactorGraph.h>
+#include <gtsam/linear/GaussianBayesNet.h>
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/linear/VectorValues.h>
 
@@ -74,6 +75,32 @@ GaussianFactorGraph GfgFromParams(const EcLqrParams<N, M> &params) {
 VectorValues fgSolFromGfg(const GaussianFactorGraph &graph) {
   gttic_(optimize);
   return graph.optimize();
+}
+
+template <int N, int M>
+Gains<N, M> fgGainsFromGfg(const GaussianFactorGraph &graph, size_t T) {
+  gttic_(calculate_gains);
+  Gains<N, M> gains;
+  gains.first.reserve(T);
+  gains.second.reserve(T);
+
+  // set ordering to x_T, u_{T-1}, x_{T-1}, ..., x_0
+  gtsam::Ordering ordering;
+  ordering += Symbol('x', T);
+  for (int t = T - 1; t >= 0; --t) {
+    ordering += Symbol('u', t);
+    ordering += Symbol('x', t);
+  }
+  // eliminate, TODO(gerry): figure out if we can do this with multifrontal
+  auto net = graph.eliminateSequential(ordering);
+  // extract K/k from GaussianConditionals
+  for (size_t t = 0; t < T; ++t) {
+    const auto &cond = net->at((T - t) * 2 - 1);
+    const auto &R = cond->R().triangularView<Eigen::Upper>();
+    gains.first[t] = R.solve(cond->S());
+    gains.second[t] = R.solve(cond->d());
+  }
+  return gains;
 }
 
 }  // namespace ecLqr

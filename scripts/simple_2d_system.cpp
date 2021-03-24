@@ -28,7 +28,8 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 1000; ++i) {
       gttic_(fg);
       auto graph = GfgFromParams(params);
-      auto result = graph.optimize();
+      auto result = fgSolFromGfg(graph);
+      auto gains = fgGainsFromGfg<2, 1>(graph, params.T);
       gttoc_(fg);
       gttic_(laine);
       auto result2 = laineSolFromParams(params);

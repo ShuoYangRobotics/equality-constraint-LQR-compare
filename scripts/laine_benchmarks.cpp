@@ -79,7 +79,8 @@ int main(int argc, char* argv[]) {
     start = high_resolution_clock::now();
     gttic_(fg);
     auto graph = GfgFromParams(params);
-    auto result = fgSolFromGfg(graph);
+    // auto result = fgSolFromGfg(graph);
+    auto gains = fgGainsFromGfg<N, M>(graph, params.T);
     gttoc_(fg);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
