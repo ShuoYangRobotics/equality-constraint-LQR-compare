@@ -24,6 +24,10 @@ Qf = param.Qf;
 R = param.R;
 
 
+% noises 
+q_noise = gtsam.noiseModel.Gaussian.Information(Q);
+r_noise = gtsam.noiseModel.Gaussian.Information(R);
+qf_noise = gtsam.noiseModel.Gaussian.Information(Qf);
 % 2. construct factor graph
 prior_noise = gtsam.noiseModel.Constrained.All(nx);
 dynamics_noise = gtsam.noiseModel.Constrained.All(nx);
@@ -45,6 +49,15 @@ for i=1:N
   U = [U gtsam.symbol('u', i)];
 end
 X = [X gtsam.symbol('x', N+1)];
+
+% set ordering as N+1...1
+ordering = gtsam.Ordering();
+ordering.push_back(X(N+1));
+for i = N:-1:1
+    ordering.push_back(X(i));
+    ordering.push_back(U(i));
+end
+
 
 % set initial state as prior
 graph.add(X(1), eye(nx), param.x0, prior_noise);
@@ -68,10 +81,6 @@ for i=1:N
 end
 
 
-% noises 
-q_noise = gtsam.noiseModel.Gaussian.Information(Q);
-r_noise = gtsam.noiseModel.Gaussian.Information(R);
-qf_noise = gtsam.noiseModel.Gaussian.Information(Qf);
 
 % state and control cost
 if isa(q_noise, 'gtsam.noiseModel.Diagonal') &&...
@@ -89,17 +98,12 @@ end
 % set final state as cost
 graph.add(X(N+1), eye(nx), xN, qf_noise);
 
-% set ordering as N+1...1
-ordering = gtsam.Ordering();
-ordering.push_back(X(N+1));
-for i = N:-1:1
-    ordering.push_back(X(i));
-    ordering.push_back(U(i));
-end
 
 % solve
+tic
 result = graph.optimize(ordering);
 
+toc
 Soln(N).t = 0;
 Soln(N).u = zeros(nu,1);
 Soln(N).x = zeros(nu,1);
@@ -109,6 +113,7 @@ Soln(N+1).K = zeros(nx,nu);
 Soln(N+1).k = zeros(1,nu);
 % no variable elimination to get K list yet
 
+toc
 ordering = gtsam.Ordering();
 for idx = N:-1:1
     ordering.push_back(X(idx+1));
@@ -120,7 +125,6 @@ for idx = N:-1:1
 %     assert(all(abs(b.back().R - eye(nu)) < 1e-9, 'all'),...
 %            'R matrix not identity');
 end
-
 
 
 for idx=1:N

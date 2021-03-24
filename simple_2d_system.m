@@ -68,106 +68,114 @@ G_list(:,:,param.Cx(1)) = eye(param.nx);
 h_list(:,param.Cx(1)) = -constraint_pt;
 % h_list(:,param.Cx(2)) = -param.xN;
 
+% for i=1:N   
+%     if (ismember(i,param.Cxu))
+%         C_list(:,:,i) = eye(param.nx);
+%         D_list(:,:,i) = [1;1];
+%         r_list(:,i) = [-1 1];
+%     end
+% end
+
 % solve the LQR 
 % unified input output struct 
 %% 1. using sideris method
-Soln = ecLQR_sideris(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
+Soln_fg = ecLQR_sideris(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
 ySol = zeros(1,N);
 for i=1:(N+1)
-    xSol(i) = Soln(i).x(1);
-    ySol(i) = Soln(i).x(2);
+    xSol(i) = Soln_fg(i).x(1);
+    ySol(i) = Soln_fg(i).x(2);
 end
 uSol = zeros(nu,N);
 for i=1:N
-    uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).uff;
+    uSol(:,i) = Soln_fg(i).K * Soln_fg(i).x + Soln_fg(i).uff;
 end
 subplot(3,3,1); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
-plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plot(Soln_fg(1).x(1),Soln_fg(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
+% plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 1 (Sideris) trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 1 (Sideris) trajectory  \n final cost = %f  constraint violation = %f', [finalcost, vio]);
 title(string);
 
 subplot(3,3,4);
-plot(1:(N+1), xSol,1:(N+1), ySol)
+plot(1:N, xSol(1:N),1:N, ySol(1:N))
 title('Baseline Method 1 state plot');
-legend('state(1)','state(2)')
+legend('x(1)','x(2)')
 subplot(3,3,7);
 plot(1:N, uSol)
 title('Baseline Method 1 control plot');
 legend('control')
 %% 2. using factor graph
-Soln = ecLQR_fg(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
+Soln_fg = ecLQR_fg(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);% we know nx = 2
 xSol = zeros(1,N);
 ySol = zeros(1,N);
 for i=1:(N+1)
-    xSol(i) = Soln(i).x(1);
-    ySol(i) = Soln(i).x(2);
+    xSol(i) = Soln_fg(i).x(1);
+    ySol(i) = Soln_fg(i).x(2);
 end
 uSol = zeros(nu,N);
 for i=1:N
-    uSol(:,i) = Soln(i).u;
+    uSol(:,i) = -Soln_fg(i).K * Soln_fg(i).x + Soln_fg(i).k;
 end
 subplot(3,3,3); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
-plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plot(Soln_fg(1).x(1),Soln_fg(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
+% plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Proposed factor graph method trajectory \n start (0,0) target(3,2) must go through (2,-2) \n final cost = %f constraint violation = %f', [finalcost, vio]);
+string = sprintf('Proposed factor graph method trajectory  \n final cost = %f constraint violation = %f', [finalcost, vio]);
 title(string);
 
 
 subplot(3,3,6);
-plot(1:(N+1), xSol,1:(N+1), ySol)
+plot(1:N, xSol(1:N),1:N, ySol(1:N))
 title('Proposed factor graph method state plot');
-legend('state(1)','state(2)')
+legend('x(1)','x(2)')
 subplot(3,3,9);
 plot(1:N, uSol)
 title('Proposed factor graph method control plot');
 legend('control')
 
 %% 3. using Laine
-Soln = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
+Soln_l = ecLQR_laine(param, param.xN, A_list, B_list, C_list, D_list, G_list, r_list, h_list);
 xSol = zeros(1,N);
 ySol = zeros(1,N);
 for i=1:(N+1)
-    xSol(i) = Soln(i).x(1);
-    ySol(i) = Soln(i).x(2);
+    xSol(i) = Soln_l(i).x(1);
+    ySol(i) = Soln_l(i).x(2);
 end
 uSol = zeros(nu,N);
 for i=1:N
-    uSol(:,i) = Soln(i).K * Soln(i).x + Soln(i).k;
+    uSol(:,i) = Soln_l(i).K * Soln_l(i).x + Soln_l(i).k;
 end
 subplot(3,3,2); hold on;
 plot(xSol,ySol,'r-','LineWidth',3);
-plot(Soln(1).x(1),Soln(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
-plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
+plot(Soln_l(1).x(1),Soln_l(1).x(2),'ro','MarkerSize',10,'LineWidth',2)
+% plot(constraint_pt(1),constraint_pt(2),'go','MarkerSize',10,'LineWidth',3)
 plot(param.xN(1),param.xN(2),'b*','MarkerSize',10,'LineWidth',3)
 xLim = [-5,5];
 yLim = [-5,8];
 axis([xLim,yLim]); axis equal;
 finalcost = getCost(N,xSol,ySol,uSol,param.Q, param.R, param.Qf, param.xN);
 vio = getConViolate(N, param, [xSol;ySol], uSol, C_list, D_list, G_list, r_list, h_list);
-string = sprintf('Baseline Method 2 (Laine) trajectory\n start (0,0) target(3,2) must go through (2,-2) \n final cost =  %f  constraint violation = %f', [finalcost, vio]);
+string = sprintf('Baseline Method 2 (Laine) trajectory\n final cost =  %f  constraint violation = %f', [finalcost, vio]);
 title(string);
 
 
 subplot(3,3,5);
-plot(1:(N+1), xSol,1:(N+1), ySol)
+plot(1:N, xSol(1:N),1:N, ySol(1:N))
 title('Baseline Method 2 state plot');
-legend('state(1)','state(2)')
+legend('x(1)','x(2)')
 subplot(3,3,8);
 plot(1:N, uSol)
 title('Baseline Method 2 control plot');

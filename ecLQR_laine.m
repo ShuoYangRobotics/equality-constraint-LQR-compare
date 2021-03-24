@@ -1,4 +1,4 @@
-function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
+function [x_list, K_list, k_list] = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, r_list, h_list)
 %ECLQR_SIDERIS solve LQR with equality constraint using sideris method
 %              in paper Efficient computation of feedback control for equality-constrained lqr
 % It uses the general input output structure:
@@ -10,6 +10,7 @@ function Soln = ecLQR_laine(param, xN,  A_list, B_list, C_list, D_list, G_list, 
 % Outputs:
 %  -- Soln 
 
+tic
 %1. necessary variables
 N = param.N;
 nx = param.nx;
@@ -27,7 +28,6 @@ R = param.R;
 C_list = [C_list; G_list(:, :, 1:N)];
 D_list = [D_list; zeros(ncx, nu, N)];
 r_list = [r_list; h_list(:, 1:N)];
-
 % 2. init cost to go and constraint to go
 % use notations in paper 
 % cost to go is 0.5*x'*VxxT*x + vxlT*x 
@@ -35,8 +35,8 @@ r_list = [r_list; h_list(:, 1:N)];
 % 2.1 equation 9
 VxxT = Qf;
 vxlT = -Qf*xN;
-HxT = G_list(:,:,N+1);
-hlT = h_list(:,N+1);
+HxT = G_list(:,:,N);
+hlT = h_list(:,N);
 
 % cost to go and costraint to go during iteration
 Vxxt1 = VxxT;
@@ -47,16 +47,19 @@ hlt1 = hlT;
 k_list = zeros(nu,N);  % from 0 to N-1
 K_list = zeros(nu,nx,N);  % from 0 to N-1
 
+
+qxlt = zeros(nx,1);
+qult = zeros(nu,1);
+flt = zeros(nx,1);
+
+Qxxt = Q;
+Quut = R;
+Quxt = zeros(nu,nx);
+
 for i=N:-1:1
     % necessary varialbe conversion
-    qxlt = zeros(nx,1);
-    qult = zeros(nu,1);
-    flt = zeros(nx,1);
     Fxt = A_list(:,:,i);
     Fut = B_list(:,:,i);
-    Qxxt = Q;
-    Quut = R;
-    Quxt = zeros(nu,nx);
     Gxt = C_list(:,:,i);
     Gut = D_list(:,:,i);
     gl = r_list(:,i);
@@ -83,9 +86,11 @@ for i=N:-1:1
 %     w = -inv(Z'*Muut*Z)*Z'*(Muxt*xt+mult);
     if (rankNut == 0)
         Z = V;
+        A = Z'*Muut*Z;
+        b = Z';
         % equation 17 and 18
-        K = -( Z*(Z'*Muut*Z)\Z'*Muxt );
-        k = -( Z*(Z'*Muut*Z)\Z'*mult );
+        K = -( Z*(A\b)*Muxt );
+        k = -( Z*(A\b)*mult );
         k_list(:,i) = k;
         K_list(:,:,i) = K;
     elseif (rankNut == nu)
@@ -108,7 +113,7 @@ for i=N:-1:1
     end
     % remove redudant terms, the paragraph below equation 21
     c = [hlt1 Hxt1];
-    [U,S,V] = svd(c);
+    [U,~,~] = svd(c);
     c = U'*c;
     rows = size(c,1);
     c = c(1:rows-rankNut,:);
@@ -125,12 +130,11 @@ for i=N:-1:1
     vxlt = mxlt + K'*mult + (Muxt'+K'*Muut)*k;
     
     % update 
-    Hxt1 = Hxt;
-    hlt1 = hlt;
+%     Hxt1 = Hxt;
+%     hlt1 = hlt;
     Vxxt1 = Vxxt;
     vxlt1 = vxlt;
 end
-
 % a final forward pass to get x_list
 x_list = zeros(nx,N+1);  % from 0 to N
 x_list(:,1) = param.x0;
@@ -140,16 +144,17 @@ for i=1:N
     x_list(:,i+1) = A_list(:,:,i)*x_list(:,i) + B_list(:,:,i)*u;
 end
 
-nSoln = N;
-Soln(nSoln+1).K = zeros(nx,nu);
-Soln(nSoln+1).k = zeros(nu,1);
-Soln(nSoln+1).x = zeros(nx,1);
-
-for i=1:nSoln
-    Soln(i).K = K_list(:,:,i);
-    Soln(i).k = k_list(:,i);
-    Soln(i).x = x_list(:,i);
-end
-Soln(N+1).x = x_list(:,N+1);
+toc
+% nSoln = N;
+% Soln(nSoln+1).K = zeros(nx,nu);
+% Soln(nSoln+1).k = zeros(nu,1);
+% Soln(nSoln+1).x = zeros(nx,1);
+% 
+% for i=1:nSoln
+%     Soln(i).K = K_list(:,:,i);
+%     Soln(i).k = k_list(:,i);
+%     Soln(i).x = x_list(:,i);
+% end
+% Soln(N+1).x = x_list(:,N+1);
 
 end
