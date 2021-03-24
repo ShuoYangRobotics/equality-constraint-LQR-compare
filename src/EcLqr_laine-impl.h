@@ -141,7 +141,7 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
       gttic_(reduceH);
       // remove redundant terms, the paragraph below equation 21
       MatrixXd cxt1 = (MatrixXd(hlt1.rows(), N+1) << hlt1, Hxt1).finished();
-      #def SLOWER_BUT_MORE_ACCURATEx
+      #define SLOWER_BUT_MORE_ACCURATEx
       #ifdef SLOWER_BUT_MORE_ACCURATE
       // SVD version (slower)
       Eigen::JacobiSVD<MatrixXd> svd2(
