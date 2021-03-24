@@ -24,7 +24,7 @@ find_package(GTSAM REQUIRED) # Uses installed package
 set(LIB_NAME ${PROJECT_NAME})
 file(GLOB headers "src/*.h")
 file(GLOB sources "src/*.cpp")
-add_library(${LIB_NAME} SHARED ${headers} ${sources})
+add_library(${LIB_NAME} SHARED ${headers} ${sources} tests/exampleProblems.h)
 target_link_libraries(${LIB_NAME} gtsam)
 
 # Install library

@@ -7,6 +7,7 @@
  */
 
 #include <src/EcLqr_fg.h>
+#include <tests/exampleProblems.h>
 
 #include <gtsam/inference/Symbol.h>
 #include <gtsam/base/Matrix.h>
@@ -18,23 +19,8 @@ using namespace gtsam;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-  double dt = 0.01;
-  double Tf = 1;
-  size_t T = Tf / dt;
-
   // setup
-  EcLqrParams<2, 1> params;
-  params.T = T;
-  params.x0 = Z_2x1;
-  params.xf = (Vector2() << 3, 2).finished();
-  params.A = (Matrix22() << 1, dt, 0, 1).finished();
-  params.B = (Vector2() << 0, dt).finished();
-  params.Q = 1e-2 * I_2x2;
-  params.R = 1e-3 * I_1x1;
-  params.Qf = 500 * I_2x2;
-  EcLqrParams<2, 1>::XConstraint xConstraint{
-      I_2x2, -(Vector2() << 2, -2).finished(), T / 2};
-  params.xConstraints.emplace_back(xConstraint);
+  EcLqrParams<2, 1> params = example::params_simple_2d_system();
 
   // solve
   {
@@ -47,6 +33,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
+  // debug print solution
   // for (size_t t = 0; t < T; ++t) {
   //   auto xy = result.at(symbol('x', t));
   //   cout << t << ":\t" << xy[0] << '\t' << xy[1] << endl;

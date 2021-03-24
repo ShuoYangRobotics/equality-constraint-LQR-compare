@@ -5,6 +5,8 @@
  * @author  Yetong Zhang
  */
 
+#include "exampleProblems.h"
+
 #include <src/EcLqrParams.h>
 #include <src/EcLqr_laine.h>
 
@@ -21,39 +23,48 @@ using namespace gtsam;
 using namespace std;
 
 /* ************************************************************************* */
-TEST(EcLqr, lqr_laine) {
-  double dt = 0.01;
-  double Tf = 1;
-  size_t T = Tf / dt;
-
-  EcLqrParams<2, 1> params;
-  params.T = T;
-  params.x0 = Z_2x1;
-  params.xf = (Vector2() << 3, 2).finished();
-  params.A = (Matrix22() << 1, dt, 0, 1).finished();
-  params.B = (Vector2() << 0, dt).finished();
-  params.Q = 1e-2 * I_2x2;
-  params.R = 1e-3 * I_1x1;
-  params.Qf = 500 * I_2x2;
-  EcLqrParams<2, 1>::XConstraint xConstraint{
-      I_2x2, -(Vector2() << 2, -2).finished()};
-  params.xConstraints.emplace(T / 2 - 1, xConstraint);
+TEST(EcLqr, simple_2d_system) {
+  EcLqrParams<2, 1> params = example::params_simple_2d_system();
 
   cout << setiosflags(ios::fixed) << setprecision(3);
   auto result = laineSolFromEcLqr(params);
 
-  #include "simple_2d_system.h"
-  for (size_t t = 0; t < T; ++t) {
+  #include "data/simple_2d_system.h"
+  for (size_t t = 0; t < params.T; ++t) {
     Vector2 expected_xy = (Vector2() << x[t], y[t]).finished();
     Vector1 expected_u = (Vector1() << u[t]).finished();
     EXPECT(assert_equal(expected_xy, result.at(Symbol('x', t))));
     EXPECT(assert_equal(expected_u, result.at(Symbol('u', t))));
   }
 
+  for (size_t t = 0; t < params.T; ++t) {
+    auto xy = result.at(Symbol('x', t));
+    auto u = result.at(Symbol('u', t));
+    cout << x[t] << " : " << xy(0) << '\t'
+         << y[t] << " : " << xy(1) << '\t'
+         << u[t] << " : " << u(0) << endl;
+  }
+}
+
+/* ************************************************************************* */
+TEST(EcLqr, three_by_three) {
+  EcLqrParams<3, 3> params =
+      example::params_three_by_three_system_state_and_control();
+
   cout << setiosflags(ios::fixed) << setprecision(3);
-  for (size_t t = 0; t < T; ++t) {
-    cout << x[t] << "\t" << y[t] << " : " << result.at(Symbol('x', t)).transpose() << "\t***\t";
-    cout << u[t] << " : " << result.at(Symbol('u', t)) << endl;
+  auto result = laineSolFromEcLqr(params);
+
+  #include "data/three_by_three_system_state_and_control.h"
+  for (size_t t = 0; t < params.T; ++t) {
+    Vector3 expected_xyz = (Vector3() << x[t], y[t], z[t]).finished();
+    EXPECT(assert_equal(expected_xyz, result.at(Symbol('x', t))));
+  }
+
+  for (size_t t = 0; t < params.T; ++t) {
+    auto xyz = result.at(Symbol('x', t));
+    cout << x[t] << " : " << xyz(0) << '\t'
+         << y[t] << " : " << xyz(1) << '\t'
+         << z[t] << " : " << xyz(2) << endl;
   }
 }
 
