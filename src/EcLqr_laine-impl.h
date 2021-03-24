@@ -140,10 +140,17 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
     if (hlt1.rows() > 0) {
       // remove redundant terms, the paragraph below equation 21
       MatrixXd cxt1 = (MatrixXd(hlt1.rows(), N+1) << hlt1, Hxt1).finished();
-      Eigen::JacobiSVD<MatrixXd> svd2(cxt1,
-                                      Eigen::ComputeThinU | Eigen::ComputeThinV);
-      hlt1 = svd2.matrixV().transpose().block(0, 0, svd2.rank(), 1);
-      Hxt1 = svd2.matrixV().transpose().block(0, 1, svd2.rank(), N);
+      Eigen::JacobiSVD<MatrixXd> svd2(
+          cxt1, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      svd2.setThreshold(1e-4);
+      if (abs(svd2.singularValues()(0)) < 1e-6) {
+        hlt1 = MatrixXd(0, 1);
+        Hxt1 = MatrixXd(0, N);
+      } else {
+        MatrixXd VT = svd2.matrixV().transpose();
+        hlt1 = VT.block(0, 0, svd2.rank(), 1);
+        Hxt1 = VT.block(0, 1, svd2.rank(), N);
+      }
     }
   }
 
