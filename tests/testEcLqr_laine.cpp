@@ -14,7 +14,7 @@
 
 #include <CppUnitLite/TestHarness.h>
 
-#include <fstream>
+#include <iomanip>
 
 using namespace ecLqr;
 using namespace gtsam;
@@ -36,9 +36,10 @@ TEST(EcLqr, lqr_laine) {
   params.R = 1e-3 * I_1x1;
   params.Qf = 500 * I_2x2;
   EcLqrParams<2, 1>::XConstraint xConstraint{
-      I_2x2, -(Vector2() << 2, -2).finished(), T / 2 - 1};
-  params.xConstraints.emplace_back(xConstraint);
+      I_2x2, -(Vector2() << 2, -2).finished()};
+  params.xConstraints.emplace(T / 2 - 1, xConstraint);
 
+  cout << setiosflags(ios::fixed) << setprecision(3);
   auto result = laineSolFromEcLqr(params);
 
   #include "simple_2d_system.h"
@@ -47,6 +48,12 @@ TEST(EcLqr, lqr_laine) {
     Vector1 expected_u = (Vector1() << u[t]).finished();
     EXPECT(assert_equal(expected_xy, result.at(Symbol('x', t))));
     EXPECT(assert_equal(expected_u, result.at(Symbol('u', t))));
+  }
+
+  cout << setiosflags(ios::fixed) << setprecision(3);
+  for (size_t t = 0; t < T; ++t) {
+    cout << x[t] << "\t" << y[t] << " : " << result.at(Symbol('x', t)).transpose() << "\t***\t";
+    cout << u[t] << " : " << result.at(Symbol('u', t)) << endl;
   }
 }
 
