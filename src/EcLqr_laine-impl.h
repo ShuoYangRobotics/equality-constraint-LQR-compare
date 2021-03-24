@@ -175,8 +175,6 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
   Matrix<double, N, 1> x = params.x0;
   Matrix<double, M, 1> u;
   for (size_t t = 0; t < T; ++t) {
-    if (t == 49)
-      x = (Matrix<double, N, 1>() << 2, -2).finished();
     sol.emplace(Symbol('x', t), x);
     u = Ks[t] * x + ks[t];
     sol.emplace(Symbol('u', t), u);
