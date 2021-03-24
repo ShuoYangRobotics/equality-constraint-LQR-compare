@@ -52,8 +52,8 @@ int main(int argc, char* argv[]) {
       auto C = Eigen::Matrix<double, ncxu, N>::Random();
       auto D = Eigen::Matrix<double, ncxu, M>::Random();
       auto r = Eigen::Matrix<double, ncxu, 1>::Random();
-      EcLqrParams<N, M>::XUConstraint xuConstraint{C, D, r, t};
-      params.xuConstraints.push_back(xuConstraint);
+      EcLqrParams<N, M>::XUConstraint xuConstraint{C, D, r};
+      params.xuConstraints.emplace(t, xuConstraint);
     }
     gttoc_(defineProblem);
 

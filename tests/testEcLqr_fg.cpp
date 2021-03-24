@@ -36,8 +36,8 @@ TEST(EcLqr, lqr_factorgraph) {
   params.R = 1e-3 * I_1x1;
   params.Qf = 500 * I_2x2;
   EcLqrParams<2, 1>::XConstraint xConstraint{
-      I_2x2, -(Vector2() << 2, -2).finished(), T / 2 - 1};
-  params.xConstraints.emplace_back(xConstraint);
+      I_2x2, -(Vector2() << 2, -2).finished()};
+  params.xConstraints.emplace(T / 2 - 1, xConstraint);
 
   auto graph = GfgFromEcLqr(params);
 

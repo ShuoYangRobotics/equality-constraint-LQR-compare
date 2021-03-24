@@ -10,6 +10,8 @@
 
 #include <gtsam/base/Matrix.h>
 
+#include <map>
+
 namespace ecLqr {
 
 using gtsam::Matrix;
@@ -31,16 +33,14 @@ struct EcLqrParams {
     Matrix C;
     Matrix D;
     Vector r;
-    size_t t;
   };
-  std::vector<XUConstraint> xuConstraints;
+  std::map<size_t, XUConstraint> xuConstraints;
 
   struct XConstraint {
     Matrix G;
     Vector h;
-    size_t t;
   };
-  std::vector<XConstraint> xConstraints;
+  std::map<size_t, XConstraint> xConstraints;
 };
 
 }  // namespace ecLqr
