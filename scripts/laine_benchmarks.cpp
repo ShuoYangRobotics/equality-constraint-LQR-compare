@@ -16,11 +16,15 @@
 #include <gtsam/linear/VectorValues.h>
 #include <gtsam/base/timing.h>
 
+#include <chrono> // sanity check on GTSAM's timing functions
+
 using namespace ecLqr;
 using namespace gtsam;
 using namespace std;
+using namespace std::chrono;
 
 // problem parameters
+#define ITER 10
 #define N 40
 #define M 10
 #define ncx 20
@@ -64,9 +68,15 @@ EcLqrParams<N, M> create_params() {
 }
 
 int main(int argc, char* argv[]) {
-  for (int i = 0; i < 10; ++i) {
+  auto start = high_resolution_clock::now();
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(stop - start);
+  size_t fg_total_us = 0, laine_total_us = 0;
+
+  for (int i = 0; i < ITER; ++i) {
     auto params = create_params();
 
+    start = high_resolution_clock::now();
     gttic_(fg_total);
     gttic_(fg_createGraph);
     auto graph = GfgFromEcLqr(params);
@@ -75,12 +85,24 @@ int main(int argc, char* argv[]) {
     auto result = graph.optimize();
     gttoc_(fg_optimize);
     gttoc_(fg_total);
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - start);
+    fg_total_us += duration.count();
 
+    start = high_resolution_clock::now();
     gttic_(laine_solve);
     auto result2 = laineSolFromEcLqr(params);
     gttoc_(laine_solve);
     tictoc_finishedIteration_();
+    stop = high_resolution_clock::now();
+    duration = duration_cast<microseconds>(stop - start);
+    laine_total_us += duration.count();
   }
 
+  cout << "GTSAM timing measurements (over " << ITER << " trials):" << endl;
   tictoc_print_();
+  cout << endl;
+  cout << "Manual timing measurements (sanity check):" << endl;
+  cout << "fg time:    " << fg_total_us/1000.0/ITER << "ms per trial" << endl;
+  cout << "laine time: " << laine_total_us/1000.0/ITER << "ms per trial" << endl;
 }
