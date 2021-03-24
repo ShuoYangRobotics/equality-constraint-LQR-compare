@@ -27,9 +27,9 @@ using namespace std::chrono;
 #define ITER 10
 #define N 40
 #define M 10
-#define ncx 20
-#define ncxu 20
-#define CONSTRAINED_PROPORTION 0.9
+#define ncx 10
+#define ncxu 9
+#define CONSTRAINED_PROPORTION 1
 constexpr size_t T = 250;
 
 /// creates a random noise matrix
