@@ -43,6 +43,8 @@ Vxxt1 = VxxT;
 vxlt1 = vxlT;
 Hxt1 = HxT;
 hlt1 = hlT;
+coder.varsize('Hxt1');
+coder.varsize('hlt1');
 
 k_list = zeros(nu,N);  % from 0 to N-1
 K_list = zeros(nu,nx,N);  % from 0 to N-1
@@ -117,8 +119,8 @@ for i=N:-1:1
     c = U'*c;
     rows = size(c,1);
     c = c(1:rows-rankNut,:);
-    hlt1 = c(:,1);
-    Hxt1 = c(:,2:end);
+    hlt2 = c(:,1);
+    Hxt2 = c(:,2:end);
 
     % update constraint to go , equation 20 and 21
     Hxt = Nxt + Nut*K;
@@ -129,6 +131,8 @@ for i=N:-1:1
     Vxxt = (Vxxt + Vxxt.')/2;   % this is an astonishingly important step, I debugged almost a day to figure out
     vxlt = mxlt + K'*mult + (Muxt'+K'*Muut)*k;
     
+    hlt1 = hlt2;
+    Hxt1 = Hxt2;
     % update 
 %     Hxt1 = Hxt;
 %     hlt1 = hlt;
