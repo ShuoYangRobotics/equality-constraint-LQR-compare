@@ -138,8 +138,12 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
 
     // reduce H/h
     if (hlt1.rows() > 0) {
+      gttic_(reduceH);
       // remove redundant terms, the paragraph below equation 21
       MatrixXd cxt1 = (MatrixXd(hlt1.rows(), N+1) << hlt1, Hxt1).finished();
+      #def SLOWER_BUT_MORE_ACCURATEx
+      #ifdef SLOWER_BUT_MORE_ACCURATE
+      // SVD version (slower)
       Eigen::JacobiSVD<MatrixXd> svd2(
           cxt1, Eigen::ComputeThinU | Eigen::ComputeThinV);
       svd2.setThreshold(1e-4);
@@ -151,6 +155,18 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
         hlt1 = VT.block(0, 0, svd2.rank(), 1);
         Hxt1 = VT.block(0, 1, svd2.rank(), N);
       }
+      #else
+      // LU decomposition version (faster but less numerically stable)
+      Eigen::FullPivLU<MatrixXd> lu_decomp(cxt1.transpose());
+      if (lu_decomp.maxPivot() < 1e-6) {
+        hlt1 = MatrixXd(0, 1);
+        Hxt1 = MatrixXd(0, N);
+      } else {
+        const MatrixXd &newC = lu_decomp.image(cxt1.transpose());
+        hlt1 = newC.topRows(1).transpose();
+        Hxt1 = newC.bottomRows(newC.rows()-1).transpose();
+      }
+      #endif
     }
   }
 
@@ -159,6 +175,8 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
   Matrix<double, N, 1> x = params.x0;
   Matrix<double, M, 1> u;
   for (size_t t = 0; t < T; ++t) {
+    if (t == 49)
+      x = (Matrix<double, N, 1>() << 2, -2).finished();
     sol.emplace(Symbol('x', t), x);
     u = Ks[t] * x + ks[t];
     sol.emplace(Symbol('u', t), u);
