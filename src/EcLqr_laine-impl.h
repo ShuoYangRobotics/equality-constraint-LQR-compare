@@ -86,18 +86,18 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
     Matrix<double, M, 1> &k = ks[t];
     if (nrows == 0) {
       // unconstrained case.  Note: svd segfaults when nrows == 0
-      const MatrixXd &prefix = Muut.inverse();
+      const MatrixXd prefix = Muut.inverse();
       K = -( prefix * Muxt );
       k = -( prefix * mult );
     } else {
       // constrained case: equations 17 and 18
       Eigen::JacobiSVD<MatrixXd> svd(Nut,
                                      Eigen::ComputeThinU | Eigen::ComputeFullV);
-      const auto &V = svd.matrixV();
+      const MatrixXd &V = svd.matrixV();
       if (svd.rank() == 0) {
         const MatrixXd &Z = V;
-        const MatrixXd &tmp = Z.transpose() * Muut * Z;
-        const MatrixXd &prefix = Z * Muut.inverse() * Z.transpose();
+        const MatrixXd tmp = Z.transpose() * Muut * Z;
+        const MatrixXd prefix = Z * Muut.inverse() * Z.transpose();
         K = -( prefix * Muxt );
         k = -( prefix * mult );
       } else if (svd.rank() == M) {
@@ -106,20 +106,20 @@ VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
         MatrixXd pinv = MatrixXd(M, Nut.rows());
         for (int row = 0; row < M; ++row)
           pinv.row(row) = 1/s[row] * svd.matrixU().col(row).transpose();
-        const MatrixXd &prefix = P * pinv;
+        const MatrixXd prefix = P * pinv;
         K = -( prefix * Nxt );
         k = -( prefix * nlt );
       } else {
         const MatrixXd &P = V.leftCols(svd.rank());
         const MatrixXd &Z = V.rightCols(M-svd.rank());
-        const MatrixXd &tmp = Z.transpose() * Muut * Z;
-        const MatrixXd &prefixA = Z * tmp.inverse() * Z.transpose();
+        const MatrixXd tmp = Z.transpose() * Muut * Z;
+        const MatrixXd prefixA = Z * tmp.inverse() * Z.transpose();
 
-        const auto &s = svd.singularValues();
+        const Eigen::VectorXd &s = svd.singularValues();
         MatrixXd pinv = MatrixXd(svd.rank(), Nut.rows());
         for (int row = 0; row < svd.rank(); ++row)
           pinv.row(row) = 1/s[row] * svd.matrixU().col(row);
-        const MatrixXd &prefixB = P * pinv;
+        const MatrixXd prefixB = P * pinv;
 
         K = -( prefixB * Nxt + prefixA * Muxt );
         k = -( prefixB * nlt + prefixA * mult);
