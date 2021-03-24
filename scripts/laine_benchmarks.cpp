@@ -25,10 +25,10 @@ using namespace std::chrono;
 
 // problem parameters
 #define ITER 10
-#define N 40
-#define M 10
+#define N 20
+#define M 20
 #define ncx 10
-#define ncxu 9
+#define ncxu (M-1)
 #define CONSTRAINED_PROPORTION 1
 constexpr size_t T = 250;
 
@@ -77,22 +77,18 @@ int main(int argc, char* argv[]) {
     auto params = create_params();
 
     start = high_resolution_clock::now();
-    gttic_(fg_total);
-    gttic_(fg_createGraph);
-    auto graph = GfgFromEcLqr(params);
-    gttoc_(fg_createGraph);
-    gttic_(fg_optimize);
-    auto result = graph.optimize();
-    gttoc_(fg_optimize);
-    gttoc_(fg_total);
+    gttic_(fg);
+    auto graph = GfgFromParams(params);
+    auto result = fgSolFromGfg(graph);
+    gttoc_(fg);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
     fg_total_us += duration.count();
 
     start = high_resolution_clock::now();
-    gttic_(laine_solve);
-    auto result2 = laineSolFromEcLqr(params);
-    gttoc_(laine_solve);
+    gttic_(laine);
+    auto result2 = laineSolFromParams(params);
+    gttoc_(laine);
     tictoc_finishedIteration_();
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);

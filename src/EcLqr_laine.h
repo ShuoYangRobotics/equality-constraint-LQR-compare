@@ -15,8 +15,13 @@
 
 namespace ecLqr {
 
+/**
+ * Returns the open-loop control and state trajectories for the equality
+ * constrained LQR problem described by params.
+ * @param params The parameters of the ecLQR problem
+ */
 template <int N, int M>
-gtsam::VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params);
+gtsam::VectorValues laineSolFromParams(const EcLqrParams<N, M> &params);
 
 }  // namespace ecLqr
 

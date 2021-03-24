@@ -27,7 +27,7 @@ TEST(EcLqr, simple_2d_system) {
   EcLqrParams<2, 1> params = example::params_simple_2d_system();
 
   cout << setiosflags(ios::fixed) << setprecision(3);
-  auto result = laineSolFromEcLqr(params);
+  auto result = laineSolFromParams(params);
 
   #include "data/simple_2d_system.h"
   for (size_t t = 0; t < params.T; ++t) {
@@ -52,7 +52,7 @@ TEST(EcLqr, three_by_three) {
       example::params_three_by_three_system_state_and_control();
 
   cout << setiosflags(ios::fixed) << setprecision(3);
-  auto result = laineSolFromEcLqr(params);
+  auto result = laineSolFromParams(params);
 
   #include "data/three_by_three_system_state_and_control.h"
   for (size_t t = 0; t < params.T; ++t) {

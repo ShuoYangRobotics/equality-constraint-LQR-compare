@@ -20,7 +20,8 @@ using gtsam::VectorValues;
 using gtsam::Symbol;
 
 template <int N, int M>
-VectorValues laineSolFromEcLqr(const EcLqrParams<N, M> &params) {
+VectorValues laineSolFromParams(const EcLqrParams<N, M> &params) {
+  gttic_(solve);
   using Eigen::Matrix;
   using Eigen::MatrixXd;
 

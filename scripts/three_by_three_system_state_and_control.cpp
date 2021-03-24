@@ -38,22 +38,18 @@ int main(int argc, char* argv[]) {
   auto params = example::params_three_by_three_system_state_and_control();
   for (int i = 0; i < ITER; ++i) {
     start = high_resolution_clock::now();
-    gttic_(fg_total);
-    gttic_(fg_createGraph);
-    auto graph = GfgFromEcLqr(params);
-    gttoc_(fg_createGraph);
-    gttic_(fg_optimize);
+    gttic_(fg);
+    auto graph = GfgFromParams(params);
     auto result = graph.optimize();
-    gttoc_(fg_optimize);
-    gttoc_(fg_total);
+    gttoc_(fg);
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);
     fg_total_us += duration.count();
 
     start = high_resolution_clock::now();
-    gttic_(laine_solve);
-    auto result2 = laineSolFromEcLqr(params);
-    gttoc_(laine_solve);
+    gttic_(laine);
+    auto result2 = laineSolFromParams(params);
+    gttoc_(laine);
     tictoc_finishedIteration_();
     stop = high_resolution_clock::now();
     duration = duration_cast<microseconds>(stop - start);

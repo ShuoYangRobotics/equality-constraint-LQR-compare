@@ -7,6 +7,7 @@
  */
 
 #include <src/EcLqr_fg.h>
+#include <src/EcLqr_laine.h>
 #include <tests/exampleProblems.h>
 
 #include <gtsam/inference/Symbol.h>
@@ -25,11 +26,13 @@ int main(int argc, char* argv[]) {
   // solve
   {
     for (int i = 0; i < 1000; ++i) {
-      gttic_(createGraph);
-      auto graph = GfgFromEcLqr(params);
-      gttoc_(createGraph);
-      gttic_(optimize);
+      gttic_(fg);
+      auto graph = GfgFromParams(params);
       auto result = graph.optimize();
+      gttoc_(fg);
+      gttic_(laine);
+      auto result2 = laineSolFromParams(params);
+      gttoc_(laine);
     }
   }
 
